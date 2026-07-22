@@ -125,7 +125,7 @@
       let torso = null;
       let shirtBounds = null;
 
-      function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign, sizeMult) {
+      function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign, sizeMult, angle, yOffsetFrac, xOffsetFrac) {
         sizeMult = sizeMult || { x: 2.3, y: 2.15, z: 3 };
         const center = bounds.centerWorld;
         const half = bounds.extendSizeWorld;
@@ -133,10 +133,13 @@
         // Print should cover the whole panel (collar to hem, side to side),
         // not just a centered patch — so the box spans the full width/height
         // of the panel (a little over, for full bleed to the edges/seams),
-        // centered on the panel.
+        // centered on the panel. yOffsetFrac/xOffsetFrac (fraction of
+        // half.y/half.x) shift the print from center for panels where the
+        // visible logo should sit off-center (e.g. a sleeve badge, not full
+        // coverage).
         const position = new BABYLON.Vector3(
-          center.x,
-          center.y,
+          center.x + half.x * (xOffsetFrac || 0),
+          center.y + half.y * (yOffsetFrac || 0),
           center.z + half.z * zSign
         );
         const normal = new BABYLON.Vector3(0, 0, zSign);
@@ -155,7 +158,7 @@
           position,
           normal,
           size,
-          angle: 0,
+          angle: angle || 0,
         });
 
         const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
@@ -229,7 +232,18 @@
           );
           const sleeveSizeMult = { x: 1.6, y: 1.6, z: 1.2 };
           if (leftSleeveMesh) {
-            addPrintDecal("leftSleeveDecal", leftSleeveMesh, leftSleeveMesh.getBoundingInfo().boundingBox, "assets/left-sleeve.png", 1, sleeveSizeMult);
+            // Horizontal (no rotation), shifted down from center and a
+            // wider box (avoids cropping "SCARPA") — positioned lower on
+            // the sleeve per direct visual reference from the user.
+            const lb = leftSleeveMesh.getBoundingInfo().boundingBox;
+            // The logo asset itself is now tightly cropped to just the
+            // wordmark (no padding), 7977x760 — a wide, thin banner shape —
+            // so the box should match that aspect instead of the old
+            // padded-canvas guess.
+            addPrintDecal(
+              "leftSleeveDecal", leftSleeveMesh, lb,
+              "assets/left-sleeve.png", 1, { x: 1.55, y: 0.2, z: 1.0 }, 0, -0.1, -0.15
+            );
           }
           if (rightSleeveMesh) {
             addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", 1, sleeveSizeMult);
