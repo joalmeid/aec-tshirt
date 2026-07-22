@@ -62,7 +62,7 @@
       // --- Camera ---
       const camera = new BABYLON.ArcRotateCamera(
         "camera",
-        -Math.PI / 2,   // alpha: face the shirt head-on
+        Math.PI / 2,    // alpha: face the shirt's front (Body_Front is the z>0 panel)
         Math.PI / 2.3,  // beta: slightly above eye-level
         6,              // radius: starting distance
         BABYLON.Vector3.Zero(),
@@ -84,6 +84,11 @@
       );
       fillLight.intensity = 0.6;
 
+      // Two key lights, mirrored front/back (z-component flipped), so
+      // whichever panel the camera is orbited to face is lit — a single
+      // one-sided key light left the opposite panel dim/gray whenever the
+      // camera turned to view it (this model has separate front/back mesh
+      // panels, not one continuous double-sided shell).
       const keyLight = new BABYLON.DirectionalLight(
         "keyLight",
         new BABYLON.Vector3(-1, -1.5, 1),
@@ -91,6 +96,14 @@
       );
       keyLight.position = new BABYLON.Vector3(4, 6, 4);
       keyLight.intensity = 0.9;
+
+      const keyLightBack = new BABYLON.DirectionalLight(
+        "keyLightBack",
+        new BABYLON.Vector3(-1, -1.5, -1),
+        scene
+      );
+      keyLightBack.position = new BABYLON.Vector3(4, 6, -4);
+      keyLightBack.intensity = 0.9;
 
       const rimLight = new BABYLON.DirectionalLight(
         "rimLight",
@@ -163,11 +176,15 @@
             result.meshes.map((m) => m.name)
           );
 
-          // Pick the largest mesh by vertex count as the main torso/body mesh
-          // (some exports include separate meshes for buttons/seams/logos).
-          torso = result.meshes
-            .filter((m) => m.getTotalVertices() > 0)
-            .sort((a, b) => b.getTotalVertices() - a.getTotalVertices())[0];
+          // This model's own glTF node names settle which panel is front vs
+          // back (verified directly in the .glb JSON, not guessed from
+          // camera angle): "Body_Front_Node_4" parents the z>0 panel,
+          // "Body_Back_Node_5" parents the z<0 panel. Picking "front" by
+          // largest-vertex-count (as an earlier version of this code did)
+          // silently grabbed the back panel instead, since it happens to
+          // have slightly more vertices — swapping the print textures.
+          const bodyPanels = result.meshes.filter((m) => m.getTotalVertices() > 5000);
+          torso = bodyPanels.find((m) => m.getBoundingInfo().boundingBox.centerWorld.z > 0);
 
           // Plain white base material, regardless of whatever material the
           // downloaded model shipped with.
@@ -192,17 +209,15 @@
           camera.upperRadiusLimit = radius * 2;
 
           // This model splits the garment into separate front/back panel
-          // meshes rather than one continuous double-sided shell, so "torso"
-          // (the largest mesh, selected above) turns out to be the front
-          // panel only — it has no back-facing geometry at all. Find the
-          // mesh on the opposite (back) side to project the back print onto.
-          const backMesh = result.meshes
-            .filter((m) => m !== torso && m.getTotalVertices() > 0 &&
-              m.getBoundingInfo().boundingBox.centerWorld.z > 0)
-            .sort((a, b) => b.getTotalVertices() - a.getTotalVertices())[0];
+          // meshes rather than one continuous double-sided shell. "torso"
+          // above is the confirmed front (Body_Front, z>0); find its
+          // Body_Back counterpart (z<0) for the back print.
+          const backMesh = bodyPanels.find(
+            (m) => m !== torso && m.getBoundingInfo().boundingBox.centerWorld.z < 0
+          );
 
-          const frontDecal = addPrintDecal("frontDecal", torso, shirtBounds, "assets/front.png", -1);
-          const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", 1);
+          const frontDecal = addPrintDecal("frontDecal", torso, shirtBounds, "assets/front.png", 1);
+          const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", -1);
 
           // Sleeves are separate meshes too, offset to either side of center —
           // find them by X position rather than a hardcoded name.
@@ -214,10 +229,10 @@
           );
           const sleeveSizeMult = { x: 1.6, y: 1.6, z: 1.2 };
           if (leftSleeveMesh) {
-            addPrintDecal("leftSleeveDecal", leftSleeveMesh, leftSleeveMesh.getBoundingInfo().boundingBox, "assets/left-sleeve.png", -1, sleeveSizeMult);
+            addPrintDecal("leftSleeveDecal", leftSleeveMesh, leftSleeveMesh.getBoundingInfo().boundingBox, "assets/left-sleeve.png", 1, sleeveSizeMult);
           }
           if (rightSleeveMesh) {
-            addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", -1, sleeveSizeMult);
+            addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", 1, sleeveSizeMult);
           }
 
           loadingEl.style.display = "none";
