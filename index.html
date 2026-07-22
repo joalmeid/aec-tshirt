@@ -74,6 +74,7 @@
       camera.wheelPrecision = 50;
       camera.lowerBetaLimit = 0.3;
       camera.upperBetaLimit = Math.PI - 0.3;
+      camera.minZ = 0.01; // default (1) clips nearby geometry at this model's small scale
 
       // --- Lighting ---
       const fillLight = new BABYLON.HemisphericLight(
@@ -111,6 +112,43 @@
       let torso = null;
       let shirtBounds = null;
 
+      function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign) {
+        const center = bounds.centerWorld;
+        const half = bounds.extendSizeWorld;
+
+        // Chest/back print sits slightly above vertical center, roughly
+        // centered horizontally, projected from just outside the mesh surface.
+        const position = new BABYLON.Vector3(
+          center.x,
+          center.y + half.y * 0.15,
+          center.z + half.z * zSign
+        );
+        const normal = new BABYLON.Vector3(0, 0, zSign);
+        // Decal size: most of the torso's width/height. Depth needs to be
+        // generous (not just the panel's own thin bounding depth) so the
+        // projection box fully encloses the curved surface of the panel —
+        // too shallow a box only captures a sliver near dead-center where the
+        // curve happens to be exactly normal to the projection direction.
+        const size = new BABYLON.Vector3(half.x * 1.3, half.y * 1.1, half.z * 3);
+
+        const decal = BABYLON.MeshBuilder.CreateDecal(name, torsoMesh, {
+          position,
+          normal,
+          size,
+          angle: 0,
+        });
+
+        const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
+        decalMat.diffuseTexture = new BABYLON.Texture(texturePath, scene);
+        decalMat.diffuseTexture.hasAlpha = true;
+        decalMat.useAlphaFromDiffuseTexture = true;
+        decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
+        decalMat.zOffset = -2; // render slightly in front to avoid z-fighting
+        decal.material = decalMat;
+
+        return decal;
+      }
+
       BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "tshirt.glb", scene)
         .then((result) => {
           console.log(
@@ -145,6 +183,19 @@
           camera.radius = radius;
           camera.lowerRadiusLimit = radius * 0.5;
           camera.upperRadiusLimit = radius * 2;
+
+          // This model splits the garment into separate front/back panel
+          // meshes rather than one continuous double-sided shell, so "torso"
+          // (the largest mesh, selected above) turns out to be the front
+          // panel only — it has no back-facing geometry at all. Find the
+          // mesh on the opposite (back) side to project the back print onto.
+          const backMesh = result.meshes
+            .filter((m) => m !== torso && m.getTotalVertices() > 0 &&
+              m.getBoundingInfo().boundingBox.centerWorld.z > 0)
+            .sort((a, b) => b.getTotalVertices() - a.getTotalVertices())[0];
+
+          const frontDecal = addPrintDecal("frontDecal", torso, shirtBounds, "assets/front.png", -1);
+          const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", 1);
 
           loadingEl.style.display = "none";
         })
