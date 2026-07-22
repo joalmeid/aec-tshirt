@@ -282,7 +282,7 @@
           const rightSleeveMesh = result.meshes.find(
             (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x > 0.1
           );
-          const sleeveSizeMult = { x: 1.6, y: 1.6, z: 1.2 };
+          const sleeveSizeMult = { x: 2.6, y: 2.6, z: 1.6 };
           if (leftSleeveMesh) {
             // On the OUTER SIDE of the sleeve (like a real sewn-on patch) —
             // only visible when orbited to a side/profile view, not from the
@@ -301,11 +301,11 @@
             // near the top of the sleeve.
             addPrintDecal(
               "leftSleeveAccentDecal", leftSleeveMesh, lb, "assets/shoulder-accent.png",
-              1, { x: 1.8, y: 0.4, z: 1.2 }, 0, 0.35
+              1, { x: 2.6, y: 0.75, z: 1.5 }, 0, 0.35
             );
           }
           if (rightSleeveMesh) {
-            addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", 1, sleeveSizeMult);
+            addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", 1, sleeveSizeMult, 0, -0.1);
           }
 
           loadingEl.style.display = "none";
