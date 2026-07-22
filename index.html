@@ -59,6 +59,63 @@
       const scene = new BABYLON.Scene(engine);
       scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent
 
+      // --- Camera ---
+      const camera = new BABYLON.ArcRotateCamera(
+        "camera",
+        -Math.PI / 2,   // alpha: face the shirt head-on
+        Math.PI / 2.3,  // beta: slightly above eye-level
+        6,              // radius: starting distance
+        BABYLON.Vector3.Zero(),
+        scene
+      );
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = 3;
+      camera.upperRadiusLimit = 12;
+      camera.wheelPrecision = 50;
+      camera.lowerBetaLimit = 0.3;
+      camera.upperBetaLimit = Math.PI - 0.3;
+
+      // --- Lighting ---
+      const fillLight = new BABYLON.HemisphericLight(
+        "fillLight",
+        new BABYLON.Vector3(0, 1, 0),
+        scene
+      );
+      fillLight.intensity = 0.6;
+
+      const keyLight = new BABYLON.DirectionalLight(
+        "keyLight",
+        new BABYLON.Vector3(-1, -1.5, -1),
+        scene
+      );
+      keyLight.position = new BABYLON.Vector3(4, 6, 4);
+      keyLight.intensity = 0.9;
+
+      const rimLight = new BABYLON.DirectionalLight(
+        "rimLight",
+        new BABYLON.Vector3(1, 0.3, 1),
+        scene
+      );
+      rimLight.diffuse = new BABYLON.Color3(0.55, 0.75, 0.35); // event brand green
+      rimLight.intensity = 0.35;
+
+      // --- TEMPORARY debug box (removed in Task 3 once the real model loads) ---
+      const debugBox = BABYLON.MeshBuilder.CreateBox("debugBox", { size: 2 }, scene);
+      const debugMat = new BABYLON.StandardMaterial("debugMat", scene);
+      debugMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+      debugBox.material = debugMat;
+
+      // Idle auto-rotate
+      let userInteracting = false;
+      canvas.addEventListener("pointerdown", () => { userInteracting = true; });
+      scene.onBeforeRenderObservable.add(() => {
+        if (!userInteracting) {
+          camera.alpha += 0.0015;
+        }
+      });
+
+      loadingEl.style.display = "none";
+
       engine.runRenderLoop(() => {
         scene.render();
       });
