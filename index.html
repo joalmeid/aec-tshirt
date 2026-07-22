@@ -253,12 +253,17 @@
 
           const frontDecal = addPrintDecal(
             "frontDecal", torso, shirtBounds, "assets/front.png", 1,
-            { x: 2.3, y: 2.15, z: 3 }, 0, 0.15
+            { x: 2.3, y: 2.25, z: 3 }, 0, 0.21
           );
           const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", -1);
 
           // Sleeves are separate meshes too, offset to either side of center —
-          // find them by X position rather than a hardcoded name.
+          // find them by X position rather than a hardcoded name. "Left"/
+          // "right" here follow the WEARER's own left/right (standard
+          // garment convention, matching the PSD's "Left Sleeve FV" /
+          // "Right Sleeve FV" layer names) — mirrored from the viewer's
+          // perspective in this front-facing camera view, so the wearer's
+          // left (x>0.1) appears on the viewer's right side of the screen.
           const leftSleeveMesh = result.meshes.find(
             (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x > 0.1
           );
