@@ -251,7 +251,10 @@
             (m) => m !== torso && m.getBoundingInfo().boundingBox.centerWorld.z < 0
           );
 
-          const frontDecal = addPrintDecal("frontDecal", torso, shirtBounds, "assets/front.png", 1);
+          const frontDecal = addPrintDecal(
+            "frontDecal", torso, shirtBounds, "assets/front.png", 1,
+            { x: 2.3, y: 2.15, z: 3 }, 0, 0.15
+          );
           const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", -1);
 
           // Sleeves are separate meshes too, offset to either side of center —
