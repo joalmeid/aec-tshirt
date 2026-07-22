@@ -99,12 +99,6 @@
       rimLight.diffuse = new BABYLON.Color3(0.55, 0.75, 0.35); // event brand green
       rimLight.intensity = 0.35;
 
-      // --- TEMPORARY debug box (removed in Task 3 once the real model loads) ---
-      const debugBox = BABYLON.MeshBuilder.CreateBox("debugBox", { size: 2 }, scene);
-      const debugMat = new BABYLON.StandardMaterial("debugMat", scene);
-      debugMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
-      debugBox.material = debugMat;
-
       // Idle auto-rotate
       let userInteracting = false;
       canvas.addEventListener("pointerdown", () => { userInteracting = true; });
@@ -114,7 +108,50 @@
         }
       });
 
-      loadingEl.style.display = "none";
+      let torso = null;
+      let shirtBounds = null;
+
+      BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "tshirt.glb", scene)
+        .then((result) => {
+          console.log(
+            "Loaded meshes:",
+            result.meshes.map((m) => m.name)
+          );
+
+          // Pick the largest mesh by vertex count as the main torso/body mesh
+          // (some exports include separate meshes for buttons/seams/logos).
+          torso = result.meshes
+            .filter((m) => m.getTotalVertices() > 0)
+            .sort((a, b) => b.getTotalVertices() - a.getTotalVertices())[0];
+
+          // Plain white base material, regardless of whatever material the
+          // downloaded model shipped with.
+          const baseMat = new BABYLON.StandardMaterial("baseMat", scene);
+          baseMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+          baseMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+          result.meshes.forEach((m) => {
+            if (m.material) m.material = baseMat;
+          });
+
+          shirtBounds = torso.getBoundingInfo().boundingBox;
+          console.log(
+            "Torso bounds — center:", shirtBounds.centerWorld,
+            "half-extents:", shirtBounds.extendSizeWorld
+          );
+
+          // Re-frame the camera on the actual model size.
+          const radius = shirtBounds.extendSizeWorld.length() * 2.2;
+          camera.setTarget(shirtBounds.centerWorld);
+          camera.radius = radius;
+          camera.lowerRadiusLimit = radius * 0.5;
+          camera.upperRadiusLimit = radius * 2;
+
+          loadingEl.style.display = "none";
+        })
+        .catch((err) => {
+          console.error("Failed to load tshirt.glb:", err);
+          loadingEl.textContent = "Erro ao carregar o modelo 3D.";
+        });
 
       engine.runRenderLoop(() => {
         scene.render();
