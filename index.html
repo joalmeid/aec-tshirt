@@ -125,6 +125,38 @@
       let torso = null;
       let shirtBounds = null;
 
+      // For a badge that reads from the OUTER SIDE of the sleeve (like a
+      // real sewn-on patch), not the front — projects along world X instead
+      // of Z. Babylon builds the decal's own right/up axes from the normal:
+      // with normal=(xSign,0,0), "right" (size.x) comes out along world Z
+      // and "up" (size.y) stays world Y — confirmed non-mirrored in testing.
+      function addSideDecal(name, mesh, bounds, texturePath, xSign, size, angle, yOffsetFrac, zOffsetFrac) {
+        const center = bounds.centerWorld;
+        const half = bounds.extendSizeWorld;
+        const position = new BABYLON.Vector3(
+          center.x + half.x * xSign,
+          center.y + half.y * (yOffsetFrac || 0),
+          center.z + half.z * (zOffsetFrac || 0)
+        );
+        const normal = new BABYLON.Vector3(xSign, 0, 0);
+
+        const decal = BABYLON.MeshBuilder.CreateDecal(name, mesh, {
+          position,
+          normal,
+          size,
+          angle: angle || 0,
+        });
+
+        const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
+        decalMat.diffuseTexture = new BABYLON.Texture(texturePath, scene);
+        decalMat.diffuseTexture.hasAlpha = true;
+        decalMat.useAlphaFromDiffuseTexture = true;
+        decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
+        decalMat.zOffset = -2;
+        decal.material = decalMat;
+        return decal;
+      }
+
       function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign, sizeMult, angle, yOffsetFrac, xOffsetFrac) {
         sizeMult = sizeMult || { x: 2.3, y: 2.15, z: 3 };
         const center = bounds.centerWorld;
@@ -232,17 +264,15 @@
           );
           const sleeveSizeMult = { x: 1.6, y: 1.6, z: 1.2 };
           if (leftSleeveMesh) {
-            // Horizontal (no rotation), shifted down from center and a
-            // wider box (avoids cropping "SCARPA") — positioned lower on
-            // the sleeve per direct visual reference from the user.
+            // On the OUTER SIDE of the sleeve (like a real sewn-on patch) —
+            // only visible when orbited to a side/profile view, not from the
+            // straight-on front. Logo asset is 7977x760 (wide, thin banner).
             const lb = leftSleeveMesh.getBoundingInfo().boundingBox;
-            // The logo asset itself is now tightly cropped to just the
-            // wordmark (no padding), 7977x760 — a wide, thin banner shape —
-            // so the box should match that aspect instead of the old
-            // padded-canvas guess.
-            addPrintDecal(
-              "leftSleeveDecal", leftSleeveMesh, lb,
-              "assets/left-sleeve.png", 1, { x: 1.55, y: 0.2, z: 1.0 }, 0, -0.1, -0.15
+            const lh = lb.extendSizeWorld;
+            addSideDecal(
+              "leftSleeveDecal", leftSleeveMesh, lb, "assets/left-sleeve.png",
+              1, new BABYLON.Vector3(lh.z * 2.0, lh.y * 0.17, lh.x * 1.5),
+              0, -0.4, 0
             );
           }
           if (rightSleeveMesh) {
