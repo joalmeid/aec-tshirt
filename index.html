@@ -112,24 +112,31 @@
       let torso = null;
       let shirtBounds = null;
 
-      function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign) {
+      function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign, sizeMult) {
+        sizeMult = sizeMult || { x: 2.3, y: 2.15, z: 3 };
         const center = bounds.centerWorld;
         const half = bounds.extendSizeWorld;
 
-        // Chest/back print sits slightly above vertical center, roughly
-        // centered horizontally, projected from just outside the mesh surface.
+        // Print should cover the whole panel (collar to hem, side to side),
+        // not just a centered patch — so the box spans the full width/height
+        // of the panel (a little over, for full bleed to the edges/seams),
+        // centered on the panel.
         const position = new BABYLON.Vector3(
           center.x,
-          center.y + half.y * 0.15,
+          center.y,
           center.z + half.z * zSign
         );
         const normal = new BABYLON.Vector3(0, 0, zSign);
-        // Decal size: most of the torso's width/height. Depth needs to be
-        // generous (not just the panel's own thin bounding depth) so the
-        // projection box fully encloses the curved surface of the panel —
-        // too shallow a box only captures a sliver near dead-center where the
-        // curve happens to be exactly normal to the projection direction.
-        const size = new BABYLON.Vector3(half.x * 1.3, half.y * 1.1, half.z * 3);
+        // Decal size: full width/height of the panel (size.x/size.y are FULL
+        // box dimensions, and half.x/half.y are HALF-extents, so half.x*2 is
+        // the panel's full width) with a little overscan for full bleed.
+        // Depth needs to be generous (not just the panel's own thin bounding
+        // depth) so the projection box fully encloses the curved surface of
+        // the panel — too shallow a box only captures a sliver near
+        // dead-center where the curve happens to be exactly normal to the
+        // projection direction. Smaller, more tightly-curved parts (sleeves)
+        // need a shallower multiplier than the torso, tuned via sizeMult.
+        const size = new BABYLON.Vector3(half.x * sizeMult.x, half.y * sizeMult.y, half.z * sizeMult.z);
 
         const decal = BABYLON.MeshBuilder.CreateDecal(name, torsoMesh, {
           position,
@@ -196,6 +203,22 @@
 
           const frontDecal = addPrintDecal("frontDecal", torso, shirtBounds, "assets/front.png", -1);
           const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", 1);
+
+          // Sleeves are separate meshes too, offset to either side of center —
+          // find them by X position rather than a hardcoded name.
+          const leftSleeveMesh = result.meshes.find(
+            (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x > 0.1
+          );
+          const rightSleeveMesh = result.meshes.find(
+            (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x < -0.1
+          );
+          const sleeveSizeMult = { x: 1.6, y: 1.6, z: 1.2 };
+          if (leftSleeveMesh) {
+            addPrintDecal("leftSleeveDecal", leftSleeveMesh, leftSleeveMesh.getBoundingInfo().boundingBox, "assets/left-sleeve.png", -1, sleeveSizeMult);
+          }
+          if (rightSleeveMesh) {
+            addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", -1, sleeveSizeMult);
+          }
 
           loadingEl.style.display = "none";
         })
