@@ -153,6 +153,13 @@
         decalMat.useAlphaFromDiffuseTexture = true;
         decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
         decalMat.zOffset = -2;
+        // Mirrored meshes (e.g. a mirrored sleeve copy) can have inverted
+        // triangle winding, which makes an otherwise correctly-positioned
+        // decal invisible under default backface culling — confirmed via a
+        // throwaway oversized test decal that only appeared once culling
+        // was disabled. Disabling it here is safe: decals are thin overlays
+        // with no back side that needs hiding.
+        decalMat.backFaceCulling = false;
         decal.material = decalMat;
         return decal;
       }
@@ -199,6 +206,9 @@
         decalMat.useAlphaFromDiffuseTexture = true;
         decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
         decalMat.zOffset = -2; // render slightly in front to avoid z-fighting
+        // See addSideDecal's comment: mirrored-mesh winding can otherwise
+        // hide a correctly-positioned decal under default backface culling.
+        decalMat.backFaceCulling = false;
         decal.material = decalMat;
 
         return decal;
@@ -261,14 +271,16 @@
           // find them by X position rather than a hardcoded name. "Left"/
           // "right" here follow the WEARER's own left/right (standard
           // garment convention, matching the PSD's "Left Sleeve FV" /
-          // "Right Sleeve FV" layer names) — mirrored from the viewer's
-          // perspective in this front-facing camera view, so the wearer's
-          // left (x>0.1) appears on the viewer's right side of the screen.
+          // "Right Sleeve FV" layer names), mirrored from the viewer's
+          // perspective. Confirmed by direct on-screen test (solid red/blue
+          // materials, screenshotted): x>0.1 renders on the VIEWER'S LEFT,
+          // x<-0.1 on the viewer's right — the opposite of what earlier
+          // comments here assumed, which is why this swapped twice before.
           const leftSleeveMesh = result.meshes.find(
-            (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x > 0.1
+            (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x < -0.1
           );
           const rightSleeveMesh = result.meshes.find(
-            (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x < -0.1
+            (m) => m.getTotalVertices() > 0 && m.getBoundingInfo().boundingBox.centerWorld.x > 0.1
           );
           const sleeveSizeMult = { x: 1.6, y: 1.6, z: 1.2 };
           if (leftSleeveMesh) {
@@ -279,7 +291,7 @@
             const lh = lb.extendSizeWorld;
             addSideDecal(
               "leftSleeveDecal", leftSleeveMesh, lb, "assets/left-sleeve.png",
-              1, new BABYLON.Vector3(lh.z * 1.4, lh.y * 0.12, lh.x * 1.5),
+              -1, new BABYLON.Vector3(lh.z * 1.4, lh.y * 0.12, lh.x * 1.5),
               0, -0.15, 0
             );
           }
