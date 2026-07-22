@@ -85,7 +85,7 @@
 
       const keyLight = new BABYLON.DirectionalLight(
         "keyLight",
-        new BABYLON.Vector3(-1, -1.5, -1),
+        new BABYLON.Vector3(-1, -1.5, 1),
         scene
       );
       keyLight.position = new BABYLON.Vector3(4, 6, 4);
@@ -97,7 +97,7 @@
         scene
       );
       rimLight.diffuse = new BABYLON.Color3(0.55, 0.75, 0.35); // event brand green
-      rimLight.intensity = 0.35;
+      rimLight.intensity = 0.15;
 
       // Idle auto-rotate
       let userInteracting = false;
