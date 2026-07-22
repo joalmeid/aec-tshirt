@@ -294,6 +294,15 @@
               -1, new BABYLON.Vector3(lh.z * 1.4, lh.y * 0.12, lh.x * 1.5),
               0, -0.15, 0
             );
+            // Shoulder accent stripes (cropped from the front torso design's
+            // own top-right corner, since a decal can only render on the
+            // mesh it was created for — this content can't "spill over" from
+            // the separate torso decal onto the sleeve mesh). Front-facing,
+            // near the top of the sleeve.
+            addPrintDecal(
+              "leftSleeveAccentDecal", leftSleeveMesh, lb, "assets/shoulder-accent.png",
+              1, { x: 1.8, y: 0.4, z: 1.2 }, 0, 0.35
+            );
           }
           if (rightSleeveMesh) {
             addPrintDecal("rightSleeveDecal", rightSleeveMesh, rightSleeveMesh.getBoundingInfo().boundingBox, "assets/right-sleeve.png", 1, sleeveSizeMult);
