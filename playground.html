@@ -1,7 +1,7 @@
 <script>
 // Paste everything below (down to the closing "};") into
 // playground.babylonjs.com — it already provides `canvas`/`engine` globals
-// and calls an async createScene() the same way. No HTML wrapper, CDN
+// and calls the exported createScene() the same way. No HTML wrapper, CDN
 // script tags, or engine bootstrap needed here: Playground supplies all of
 // that itself. Assets load from the public aec-tshirt GitHub repo
 // (raw.githubusercontent.com), reachable from any origin including
@@ -9,7 +9,7 @@
 // doc.babylonjs.com/toolsAndResources/thePlayground/externalPGAssets.
 const ASSET_ROOT = "https://raw.githubusercontent.com/joalmeid/aec-tshirt/main/assets/";
 
-var createScene = async function () {
+export const createScene = async function () {
   const scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent
 
