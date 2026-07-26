@@ -1,0 +1,7 @@
+{
+  "name": "aec-3d-tshirt",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot server.ts"
+  }
+}
