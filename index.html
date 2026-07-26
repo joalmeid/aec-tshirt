@@ -36,9 +36,10 @@
   <div id="loading">A carregar…</div>
   <div id="fallback">O teu navegador não suporta WebGL, necessário para esta pré-visualização 3D.</div>
 
-  <!-- Babylon.js core + glTF/glb loader, from CDN. No build step. -->
+  <!-- Babylon.js core + glTF/glb loader + Inspector, from CDN. No build step. -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
 
   <script>
     const canvas = document.getElementById("renderCanvas");
@@ -131,6 +132,11 @@
             camera.alpha += 0.0015;
           }
         });
+
+        // Inspector shown by default — for checking decal placement, UVs,
+        // and material values directly against the loaded mesh while
+        // iterating.
+        scene.debugLayer.show({ embedMode: true });
 
         let torso = null;
         let shirtBounds = null;
@@ -274,7 +280,7 @@
 
           const frontDecal = addPrintDecal(
             "frontDecal", torso, shirtBounds, "assets/front.png", 1,
-            { x: 2.3, y: 2.25, z: 3 }, 0, 0.21
+            { x: 3.0, y: 2.25, z: 3 }, 0, 0.21
           );
           const backDecal = addPrintDecal("backDecal", backMesh, backMesh.getBoundingInfo().boundingBox, "assets/back.png", -1);
 
