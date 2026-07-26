@@ -56,166 +56,177 @@
         alpha: true,
       });
 
-      const scene = new BABYLON.Scene(engine);
-      scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent
+      // Playground-compatible shape: https://playground.babylonjs.com already
+      // provides `canvas`/`engine` globals and calls `createScene()` the same
+      // way (including awaiting it, since PG supports async createScene). To
+      // experiment there, paste this function's body in over PG's default
+      // createScene and iterate with its instant recompile; paste the result
+      // back here when done. Sandbox (https://sandbox.babylonjs.com) is a
+      // different tool — a drag-and-drop glTF/glb viewer with no scripting,
+      // useful only for inspecting assets/tshirt.glb's own materials/UVs in
+      // isolation from this file's decal code, not for iterating on the code.
+      const createScene = async function () {
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent
 
-      // --- Camera ---
-      const camera = new BABYLON.ArcRotateCamera(
-        "camera",
-        Math.PI / 2,    // alpha: face the shirt's front (Body_Front is the z>0 panel)
-        Math.PI / 2.3,  // beta: slightly above eye-level
-        6,              // radius: starting distance
-        BABYLON.Vector3.Zero(),
-        scene
-      );
-      camera.attachControl(canvas, true);
-      camera.lowerRadiusLimit = 3;
-      camera.upperRadiusLimit = 12;
-      camera.wheelPrecision = 50;
-      camera.lowerBetaLimit = 0.3;
-      camera.upperBetaLimit = Math.PI - 0.3;
-      camera.minZ = 0.01; // default (1) clips nearby geometry at this model's small scale
+        // --- Camera ---
+        const camera = new BABYLON.ArcRotateCamera(
+          "camera",
+          Math.PI / 2,    // alpha: face the shirt's front (Body_Front is the z>0 panel)
+          Math.PI / 2.3,  // beta: slightly above eye-level
+          6,              // radius: starting distance
+          BABYLON.Vector3.Zero(),
+          scene
+        );
+        camera.attachControl(canvas, true);
+        camera.lowerRadiusLimit = 3;
+        camera.upperRadiusLimit = 12;
+        camera.wheelPrecision = 50;
+        camera.lowerBetaLimit = 0.3;
+        camera.upperBetaLimit = Math.PI - 0.3;
+        camera.minZ = 0.01; // default (1) clips nearby geometry at this model's small scale
 
-      // --- Lighting ---
-      const fillLight = new BABYLON.HemisphericLight(
-        "fillLight",
-        new BABYLON.Vector3(0, 1, 0),
-        scene
-      );
-      fillLight.intensity = 0.6;
+        // --- Lighting ---
+        const fillLight = new BABYLON.HemisphericLight(
+          "fillLight",
+          new BABYLON.Vector3(0, 1, 0),
+          scene
+        );
+        fillLight.intensity = 0.6;
 
-      // Two key lights, mirrored front/back (z-component flipped), so
-      // whichever panel the camera is orbited to face is lit — a single
-      // one-sided key light left the opposite panel dim/gray whenever the
-      // camera turned to view it (this model has separate front/back mesh
-      // panels, not one continuous double-sided shell).
-      const keyLight = new BABYLON.DirectionalLight(
-        "keyLight",
-        new BABYLON.Vector3(-1, -1.5, 1),
-        scene
-      );
-      keyLight.position = new BABYLON.Vector3(4, 6, 4);
-      keyLight.intensity = 0.9;
+        // Two key lights, mirrored front/back (z-component flipped), so
+        // whichever panel the camera is orbited to face is lit — a single
+        // one-sided key light left the opposite panel dim/gray whenever the
+        // camera turned to view it (this model has separate front/back mesh
+        // panels, not one continuous double-sided shell).
+        const keyLight = new BABYLON.DirectionalLight(
+          "keyLight",
+          new BABYLON.Vector3(-1, -1.5, 1),
+          scene
+        );
+        keyLight.position = new BABYLON.Vector3(4, 6, 4);
+        keyLight.intensity = 0.9;
 
-      const keyLightBack = new BABYLON.DirectionalLight(
-        "keyLightBack",
-        new BABYLON.Vector3(-1, -1.5, -1),
-        scene
-      );
-      keyLightBack.position = new BABYLON.Vector3(4, 6, -4);
-      keyLightBack.intensity = 0.9;
+        const keyLightBack = new BABYLON.DirectionalLight(
+          "keyLightBack",
+          new BABYLON.Vector3(-1, -1.5, -1),
+          scene
+        );
+        keyLightBack.position = new BABYLON.Vector3(4, 6, -4);
+        keyLightBack.intensity = 0.9;
 
-      const rimLight = new BABYLON.DirectionalLight(
-        "rimLight",
-        new BABYLON.Vector3(1, 0.3, 1),
-        scene
-      );
-      rimLight.diffuse = new BABYLON.Color3(0.55, 0.75, 0.35); // event brand green
-      rimLight.intensity = 0.05;
+        const rimLight = new BABYLON.DirectionalLight(
+          "rimLight",
+          new BABYLON.Vector3(1, 0.3, 1),
+          scene
+        );
+        rimLight.diffuse = new BABYLON.Color3(0.55, 0.75, 0.35); // event brand green
+        rimLight.intensity = 0.05;
 
-      // Idle auto-rotate
-      let userInteracting = false;
-      canvas.addEventListener("pointerdown", () => { userInteracting = true; });
-      scene.onBeforeRenderObservable.add(() => {
-        if (!userInteracting) {
-          camera.alpha += 0.0015;
+        // Idle auto-rotate
+        let userInteracting = false;
+        canvas.addEventListener("pointerdown", () => { userInteracting = true; });
+        scene.onBeforeRenderObservable.add(() => {
+          if (!userInteracting) {
+            camera.alpha += 0.0015;
+          }
+        });
+
+        let torso = null;
+        let shirtBounds = null;
+
+        // For a badge that reads from the OUTER SIDE of the sleeve (like a
+        // real sewn-on patch), not the front — projects along world X instead
+        // of Z. Babylon builds the decal's own right/up axes from the normal:
+        // with normal=(xSign,0,0), "right" (size.x) comes out along world Z
+        // and "up" (size.y) stays world Y — confirmed non-mirrored in testing.
+        function addSideDecal(name, mesh, bounds, texturePath, xSign, size, angle, yOffsetFrac, zOffsetFrac) {
+          const center = bounds.centerWorld;
+          const half = bounds.extendSizeWorld;
+          const position = new BABYLON.Vector3(
+            center.x + half.x * xSign,
+            center.y + half.y * (yOffsetFrac || 0),
+            center.z + half.z * (zOffsetFrac || 0)
+          );
+          const normal = new BABYLON.Vector3(xSign, 0, 0);
+
+          const decal = BABYLON.MeshBuilder.CreateDecal(name, mesh, {
+            position,
+            normal,
+            size,
+            angle: angle || 0,
+          });
+
+          const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
+          decalMat.diffuseTexture = new BABYLON.Texture(texturePath, scene);
+          decalMat.diffuseTexture.hasAlpha = true;
+          decalMat.useAlphaFromDiffuseTexture = true;
+          decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
+          decalMat.zOffset = -2;
+          // Mirrored meshes (e.g. a mirrored sleeve copy) can have inverted
+          // triangle winding, which makes an otherwise correctly-positioned
+          // decal invisible under default backface culling — confirmed via a
+          // throwaway oversized test decal that only appeared once culling
+          // was disabled. Disabling it here is safe: decals are thin overlays
+          // with no back side that needs hiding.
+          decalMat.backFaceCulling = false;
+          decal.material = decalMat;
+          return decal;
         }
-      });
 
-      let torso = null;
-      let shirtBounds = null;
+        function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign, sizeMult, angle, yOffsetFrac, xOffsetFrac) {
+          sizeMult = sizeMult || { x: 2.3, y: 2.15, z: 3 };
+          const center = bounds.centerWorld;
+          const half = bounds.extendSizeWorld;
 
-      // For a badge that reads from the OUTER SIDE of the sleeve (like a
-      // real sewn-on patch), not the front — projects along world X instead
-      // of Z. Babylon builds the decal's own right/up axes from the normal:
-      // with normal=(xSign,0,0), "right" (size.x) comes out along world Z
-      // and "up" (size.y) stays world Y — confirmed non-mirrored in testing.
-      function addSideDecal(name, mesh, bounds, texturePath, xSign, size, angle, yOffsetFrac, zOffsetFrac) {
-        const center = bounds.centerWorld;
-        const half = bounds.extendSizeWorld;
-        const position = new BABYLON.Vector3(
-          center.x + half.x * xSign,
-          center.y + half.y * (yOffsetFrac || 0),
-          center.z + half.z * (zOffsetFrac || 0)
-        );
-        const normal = new BABYLON.Vector3(xSign, 0, 0);
+          // Print should cover the whole panel (collar to hem, side to side),
+          // not just a centered patch — so the box spans the full width/height
+          // of the panel (a little over, for full bleed to the edges/seams),
+          // centered on the panel. yOffsetFrac/xOffsetFrac (fraction of
+          // half.y/half.x) shift the print from center for panels where the
+          // visible logo should sit off-center (e.g. a sleeve badge, not full
+          // coverage).
+          const position = new BABYLON.Vector3(
+            center.x + half.x * (xOffsetFrac || 0),
+            center.y + half.y * (yOffsetFrac || 0),
+            center.z + half.z * zSign
+          );
+          const normal = new BABYLON.Vector3(0, 0, zSign);
+          // Decal size: full width/height of the panel (size.x/size.y are FULL
+          // box dimensions, and half.x/half.y are HALF-extents, so half.x*2 is
+          // the panel's full width) with a little overscan for full bleed.
+          // Depth needs to be generous (not just the panel's own thin bounding
+          // depth) so the projection box fully encloses the curved surface of
+          // the panel — too shallow a box only captures a sliver near
+          // dead-center where the curve happens to be exactly normal to the
+          // projection direction. Smaller, more tightly-curved parts (sleeves)
+          // need a shallower multiplier than the torso, tuned via sizeMult.
+          const size = new BABYLON.Vector3(half.x * sizeMult.x, half.y * sizeMult.y, half.z * sizeMult.z);
 
-        const decal = BABYLON.MeshBuilder.CreateDecal(name, mesh, {
-          position,
-          normal,
-          size,
-          angle: angle || 0,
-        });
+          const decal = BABYLON.MeshBuilder.CreateDecal(name, torsoMesh, {
+            position,
+            normal,
+            size,
+            angle: angle || 0,
+          });
 
-        const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
-        decalMat.diffuseTexture = new BABYLON.Texture(texturePath, scene);
-        decalMat.diffuseTexture.hasAlpha = true;
-        decalMat.useAlphaFromDiffuseTexture = true;
-        decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
-        decalMat.zOffset = -2;
-        // Mirrored meshes (e.g. a mirrored sleeve copy) can have inverted
-        // triangle winding, which makes an otherwise correctly-positioned
-        // decal invisible under default backface culling — confirmed via a
-        // throwaway oversized test decal that only appeared once culling
-        // was disabled. Disabling it here is safe: decals are thin overlays
-        // with no back side that needs hiding.
-        decalMat.backFaceCulling = false;
-        decal.material = decalMat;
-        return decal;
-      }
+          const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
+          decalMat.diffuseTexture = new BABYLON.Texture(texturePath, scene);
+          decalMat.diffuseTexture.hasAlpha = true;
+          decalMat.useAlphaFromDiffuseTexture = true;
+          decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
+          decalMat.zOffset = -2; // render slightly in front to avoid z-fighting
+          // See addSideDecal's comment: mirrored-mesh winding can otherwise
+          // hide a correctly-positioned decal under default backface culling.
+          decalMat.backFaceCulling = false;
+          decal.material = decalMat;
 
-      function addPrintDecal(name, torsoMesh, bounds, texturePath, zSign, sizeMult, angle, yOffsetFrac, xOffsetFrac) {
-        sizeMult = sizeMult || { x: 2.3, y: 2.15, z: 3 };
-        const center = bounds.centerWorld;
-        const half = bounds.extendSizeWorld;
+          return decal;
+        }
 
-        // Print should cover the whole panel (collar to hem, side to side),
-        // not just a centered patch — so the box spans the full width/height
-        // of the panel (a little over, for full bleed to the edges/seams),
-        // centered on the panel. yOffsetFrac/xOffsetFrac (fraction of
-        // half.y/half.x) shift the print from center for panels where the
-        // visible logo should sit off-center (e.g. a sleeve badge, not full
-        // coverage).
-        const position = new BABYLON.Vector3(
-          center.x + half.x * (xOffsetFrac || 0),
-          center.y + half.y * (yOffsetFrac || 0),
-          center.z + half.z * zSign
-        );
-        const normal = new BABYLON.Vector3(0, 0, zSign);
-        // Decal size: full width/height of the panel (size.x/size.y are FULL
-        // box dimensions, and half.x/half.y are HALF-extents, so half.x*2 is
-        // the panel's full width) with a little overscan for full bleed.
-        // Depth needs to be generous (not just the panel's own thin bounding
-        // depth) so the projection box fully encloses the curved surface of
-        // the panel — too shallow a box only captures a sliver near
-        // dead-center where the curve happens to be exactly normal to the
-        // projection direction. Smaller, more tightly-curved parts (sleeves)
-        // need a shallower multiplier than the torso, tuned via sizeMult.
-        const size = new BABYLON.Vector3(half.x * sizeMult.x, half.y * sizeMult.y, half.z * sizeMult.z);
+        try {
+          const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "tshirt.glb", scene);
 
-        const decal = BABYLON.MeshBuilder.CreateDecal(name, torsoMesh, {
-          position,
-          normal,
-          size,
-          angle: angle || 0,
-        });
-
-        const decalMat = new BABYLON.StandardMaterial(name + "Mat", scene);
-        decalMat.diffuseTexture = new BABYLON.Texture(texturePath, scene);
-        decalMat.diffuseTexture.hasAlpha = true;
-        decalMat.useAlphaFromDiffuseTexture = true;
-        decalMat.specularColor = new BABYLON.Color3(0, 0, 0);
-        decalMat.zOffset = -2; // render slightly in front to avoid z-fighting
-        // See addSideDecal's comment: mirrored-mesh winding can otherwise
-        // hide a correctly-positioned decal under default backface culling.
-        decalMat.backFaceCulling = false;
-        decal.material = decalMat;
-
-        return decal;
-      }
-
-      BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "tshirt.glb", scene)
-        .then((result) => {
           console.log(
             "Loaded meshes:",
             result.meshes.map((m) => m.name)
@@ -309,14 +320,18 @@
           }
 
           loadingEl.style.display = "none";
-        })
-        .catch((err) => {
+        } catch (err) {
           console.error("Failed to load tshirt.glb:", err);
           loadingEl.textContent = "Erro ao carregar o modelo 3D.";
-        });
+        }
 
-      engine.runRenderLoop(() => {
-        scene.render();
+        return scene;
+      };
+
+      createScene().then((scene) => {
+        engine.runRenderLoop(() => {
+          scene.render();
+        });
       });
 
       window.addEventListener("resize", () => {
