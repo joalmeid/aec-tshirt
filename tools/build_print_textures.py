@@ -92,24 +92,23 @@ ART_MARK_BOX = (71.25, 65.61, 76.56, 69.98)  # obj 25 placement, artwork mm
 # SCARPA's placement on the sleeve, as fractions of the sleeve pattern piece so
 # the intent survives a change of panel size.
 #
-# u: 0.5 is the outer face of the tube -- the outermost point of BOTH sleeves
-#    sits at half the unrolled width -- so the badge faces squarely out to the
-#    wearer's left and reads in full from a side view.
+# Across the tube: 0.5 is the outer face -- the outermost point of BOTH sleeves
+# sits at half the unrolled width -- so the badge faces squarely out to the
+# wearer's left and reads in full from a side view.
 #
-# v: 0 is the sleeve cap (shoulder), 1.0 the cuff. Note that pattern v is NOT
-#    linear with how far down the sleeve the badge LOOKS: the top of the pattern
-#    is the cap curving up into the armhole, so it compresses on screen.
-#    Measured on the outward-facing half of the tube:
+# Along the sleeve: given as a real distance up from the cuff hem rather than a
+# fraction, because fractions are treacherous here. Pattern v is NOT linear with
+# how far down the sleeve the badge LOOKS: the top of the pattern is the cap
+# curving up into the armhole, so it compresses on screen. Measured on the
+# outward-facing half of the tube:
 #
-#      pattern v    17%  34%  49%  59%  69%  75%  83%  93%
-#      looks like   13%  24%  34%  42%  59%  66%  72%  79%
+#   pattern v    17%  34%  49%  59%  69%  75%  83%  93%
+#   looks like   13%  24%  34%  42%  59%  66%  72%  79%
 #
-#    The brief is "a quarter of the way up from the cuff", judged by eye off a
-#    render, so it is a fraction of the VISIBLE sleeve -- 75% down it. That is
-#    pattern v 0.877, not 0.75. Placing it at 0.75 lands at 66% and still reads
-#    as too high.
+# Since pattern space IS real millimetres of fabric, measuring up from the hem
+# is unambiguous and survives any change of panel size.
 SCARPA_ACROSS = 0.5
-SCARPA_ALONG = 0.877
+SCARPA_ABOVE_CUFF_MM = 50.0
 SCARPA_W_MM = 105.0
 SCARPA_H_MM = 12.6
 
@@ -181,7 +180,8 @@ PANELS = {
             dict(
                 kind="stencil",
                 stencil=SCARPA_STENCIL,
-                centre_frac=(SCARPA_ACROSS, SCARPA_ALONG),
+                across_frac=SCARPA_ACROSS,
+                above_bottom_mm=SCARPA_ABOVE_CUFF_MM,
                 size_mm=(SCARPA_W_MM, SCARPA_H_MM),
                 colour=INK,
             ),
@@ -319,11 +319,12 @@ def main():
                 )
             elif op["kind"] == "stencil":
                 box = op.get("box")
-                if box is None and "centre_frac" in op:
-                    # Positioned as a fraction of the panel, sized in real
-                    # millimetres -- moving it never resizes it.
-                    cx = op["centre_frac"][0] * w_mm
-                    cy = op["centre_frac"][1] * h_mm
+                if box is None and "across_frac" in op:
+                    # Across the panel as a fraction, along it as millimetres up
+                    # from the bottom edge, sized in real millimetres -- so
+                    # moving it can never resize it.
+                    cx = op["across_frac"] * w_mm
+                    cy = h_mm - op["above_bottom_mm"]
                     sw, sh = op["size_mm"]
                     box = (cx - sw / 2, cy - sh / 2, cx + sw / 2, cy + sh / 2)
                 if box is None:
