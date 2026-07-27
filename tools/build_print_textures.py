@@ -207,127 +207,111 @@ STITCH_WIDTH_MM = 0.8
 STITCH_DASH_MM = 3.0
 STITCH_GAP_MM = 1.5
 
-# How far in from the cut edge the stitch sits. A seam is topstitched close to
-# the edge; a hem or cuff is folded under first and stitched above the fold, so
-# it sits much further in. Panels are keyed by how deep their bottom edge folds.
-SEAM_INSET_MM = 6.0
-HEM_INSET_MM = 20.0
-HEM_BAND_MM = 45.0  # how far up from the bottom edge the hem rule ramps in
-
-# The neckline is stitched much closer in than an ordinary seam, so the dashes
-# hug the collar band the way the reference shows. Without this the row sits a
-# full 6mm below the band and reads as a separate line floating on the chest.
-NECK_INSET_MM = 2.5
-NECK_NEAR_COLLAR_MM = 12.0  # 3D distance from the ribbing that counts as neckline
-
-# The hem is double-needle stitched: two parallel rows. Measured off the PSD's
-# stitch layer, where a vertical slice through the centre front crosses two
-# lines 9px apart edge to edge -- about 5mm centre to centre at that mockup's
-# scale, which is standard for a double-needle hem. Only the hem: the same test
-# crosses exactly one line at the neckline and one at each cuff.
-DOUBLE_ROW_MM = 5.0
-
-# Sleeves are unprinted below the cuff stitch, leaving a plain white band to the
-# edge. 20mm is not a free choice -- it is HEM_INSET_MM, so the print stops
-# exactly where the cuff row is stitched, which is what the reference shows.
-# Body panels get none of this: their stripes run through the hem stitching all
-# the way to the bottom edge.
-CUFF_UNPRINTED_MM = HEM_INSET_MM
-
-
-# Which panel owns which seam. Every seam joins two pieces and both their island
-# boundaries run along it, so without this the armhole gets stitched twice and
-# the neckline three times (front panel plus both collar bands).
+# ---------------------------------------------------------------- seam rules
+# Every seam is classified from the mesh, then stitched as its own run. What a
+# stretch of boundary IS gets decided by what it is sewn to -- proximity in 3D to
+# the collar, a sleeve, or the opposite body panel -- which needs no coordinate
+# thresholds and survives a change of pattern.
 #
-#   body panels  own the neckline, shoulders, armholes, sides and their own hem
-#   sleeves      own only their cuff -- the armhole is already drawn by the body
-#   collars      own nothing; the body panel's neckline stitch is that seam
-STITCH_ZONE = {
-    "front": "all",
-    "back": "all",
-    "sleeve_r": "hem_only",
-    "sleeve_l": "hem_only",
-    "collar_a": None,
-    "collar_b": None,
+# The previous version offset each panel's whole boundary as one curve, with an
+# inset that varied by height. That produced every stitching defect at once: the
+# deep hem inset also applied to points low on the SIDE seams, whose inward
+# direction is horizontal, so those lines swung ~14mm sideways and read as a
+# spurious rising diagonal; and one continuous curve made the stitch turn every
+# corner, where an angle-bisector offset overshoots or self-intersects.
+SEAM_SPEC = {
+    "neck": dict(inset=2.5, rows=1),
+    "shoulder": dict(inset=6.0, rows=1),
+    "armhole": dict(inset=6.0, rows=1),
+    "side": dict(inset=6.0, rows=1),
+    # The only double-needle seam, measured off the PSD: two rows 5mm apart.
+    "hem": dict(inset=20.0, rows=2, row_gap=5.0),
+    # Trimmed harder than the rest: a sleeve's bottom corners are rounded, so
+    # the cuff run curves up into the underarm over its last ~15mm and offsetting
+    # that leaves a hook. Two hooks meeting once the tube is sewn read as a cross
+    # under the cuff.
+    "cuff": dict(inset=20.0, rows=1, trim=16.0),
+    # A sleeve's armhole is already drawn by the body panel it is sewn to, and
+    # the underarm is an enclosed seam with no topstitching.
+    "sleeve_armhole": None,
+    "underarm": None,
 }
-SLEEVE_HEM_BAND_MM = 70.0  # how far up from the cuff still counts as its hem
+
+# Every seam stops this far short of its corners, the way a real seam is not
+# sewn into the next one.
+STITCH_TRIM_MM = 5.0
+
+NEAR_COLLAR_MM = 12.0
+NEAR_PIECE_MM = 8.0
+
+# Sleeves carry no print below the cuff stitch, leaving a plain white band to the
+# edge. Read from the spec rather than repeated, so the print always stops
+# exactly where the cuff is stitched however that inset is retuned. Body panels
+# get none of this: their stripes run through the hem stitching to the edge.
+CUFF_UNPRINTED_MM = SEAM_SPEC["cuff"]["inset"]
 
 
-def stitch_where(panel, height_mm):
-    """Predicate over boundary points: is this stretch of seam stitched here?"""
-    zone = STITCH_ZONE.get(panel, "all")
-    if zone is None:
-        return lambda u, v: False
-    if zone == "hem_only":
-        return lambda u, v: (height_mm - v) < SLEEVE_HEM_BAND_MM
-    return None
+def classify_boundary(panel, loop_pos, loop_uv, height_mm, neighbours):
+    """Label every point of a boundary loop with the seam it belongs to.
 
-
-def neckline_uv(mesh, pattern_mm, collar_meshes):
-    """Pattern-space points on this panel's boundary that form the NECKLINE.
-
-    Found from geometry rather than guessed from position: the neckline is
-    whichever part of the boundary runs along the collar, so it is the boundary
-    vertices sitting within a few millimetres of the ribbing meshes in 3D. That
-    holds regardless of how the neck is shaped, where a rule like "v below some
-    threshold and u near the middle" would need retuning for every panel.
+    `neighbours["bodies"]` must EXCLUDE the panel being classified. Including it
+    makes every point zero millimetres from "a body panel", so the whole boundary
+    classifies as shoulder or side and the hem disappears entirely.
     """
-    if not collar_meshes:
-        return np.empty((0, 2))
-    collar = np.vstack([m["pos"] for m in collar_meshes])
-    uv = mesh["uv"] - np.array([pattern_mm["u0"], pattern_mm["v0"]])
-    limit = (NECK_NEAR_COLLAR_MM / 1000.0) ** 2  # positions are in metres
+    if panel.startswith("collar"):
+        # The collar bands own no seam. The neckline they sit on is stitched by
+        # the body panel, and drawing it here too put three concentric rows
+        # around the neck.
+        return np.full(len(loop_pos), "collar_edge", dtype=object)
 
-    out = []
-    for loop in seams.boundary_loops(mesh["idx"]):
-        pts = mesh["pos"][loop]
-        # squared distance from each boundary point to the nearest collar vertex
-        for i, p in enumerate(pts):
-            if np.min(np.sum((collar - p) ** 2, axis=1)) < limit:
-                out.append(uv[loop[i]])
-    return np.array(out) if out else np.empty((0, 2))
+    d_collar = seams.nearest_mm(loop_pos, neighbours["collar"])
+    d_sleeve = seams.nearest_mm(loop_pos, neighbours["sleeves"])
+    d_body = seams.nearest_mm(loop_pos, neighbours["bodies"])
 
+    if panel in ("sleeve_r", "sleeve_l"):
+        labels = np.full(len(loop_pos), "underarm", dtype=object)
+        labels[d_body < NEAR_PIECE_MM] = "sleeve_armhole"
+        # The cuff is the free bottom edge: the end of the tube, nowhere near
+        # another piece.
+        labels[(d_body >= NEAR_PIECE_MM) & (loop_uv[:, 1] > height_mm - 12.0)] = "cuff"
+        return labels
 
-def inset_with_neckline(panel, height_mm, neck_pts):
-    """inset_fn that tightens along the neckline and deepens toward the hem."""
-    base = inset_for(panel, height_mm)
-    if len(neck_pts) == 0:
-        return base
+    labels = np.full(len(loop_pos), "hem", dtype=object)
+    near_body = d_body < NEAR_PIECE_MM
+    armhole = d_sleeve < NEAR_PIECE_MM
 
-    def fn(u, v):
-        d2 = np.min((neck_pts[:, 0] - u) ** 2 + (neck_pts[:, 1] - v) ** 2)
-        if d2 < 6.0**2:
-            return NECK_INSET_MM
-        return base(u, v)
-
-    return fn
-
-
-def hem_row_where(panel, height_mm):
-    """Where the SECOND stitch row goes: along a body panel's hem only."""
-    if panel not in ("front", "back"):
-        return lambda u, v: False
-    return lambda u, v: (height_mm - v) < HEM_BAND_MM
+    # Shoulder above the armhole, side seam below it. Split on the armhole's own
+    # v-extent rather than at mid-panel: mid-panel lets "shoulder" leak down over
+    # the upper half of the side seam, which is a different seam entirely.
+    if armhole.any():
+        top, bottom = loop_uv[armhole, 1].min(), loop_uv[armhole, 1].max()
+    else:
+        top = bottom = height_mm * 0.5
+    labels[near_body & (loop_uv[:, 1] <= top)] = "shoulder"
+    labels[near_body & (loop_uv[:, 1] >= bottom)] = "side"
+    labels[armhole] = "armhole"
+    labels[d_collar < NEAR_COLLAR_MM] = "neck"
+    return labels
 
 
-def inset_for(panel, height_mm):
-    """Return inset_fn(u, v) -> millimetres, deeper near a folded hem.
+def panel_stitches(panel, mesh, pattern_mm, neighbours):
+    """Every stitch dash for one panel, in pattern millimetres.
 
-    Ramped rather than switched, so a single continuous boundary loop does not
-    jump between two offsets where the hem meets the side seam.
+    Only the largest boundary loop is used. A panel's other loops are the inner
+    shell's outline and thin rim bands that duplicate stretches of the same
+    seams -- stitching them would double every line, and the narrowest of them
+    collapse when offset.
     """
-    hem_panels = {"front", "back", "sleeve_r", "sleeve_l"}
-    if panel not in hem_panels:
-        return lambda u, v: SEAM_INSET_MM
-
-    def fn(u, v):
-        d = height_mm - v  # distance up from the bottom edge
-        if d >= HEM_BAND_MM:
-            return SEAM_INSET_MM
-        t = max(0.0, min(1.0, 1.0 - d / HEM_BAND_MM))
-        return SEAM_INSET_MM + (HEM_INSET_MM - SEAM_INSET_MM) * t
-
-    return fn
+    loops = seams.boundary_loops(mesh["idx"])
+    if not loops:
+        return []
+    loop = max(loops, key=len)
+    origin = np.array([pattern_mm["u0"], pattern_mm["v0"]])
+    loop_uv = mesh["uv"][loop] - origin
+    labels = classify_boundary(panel, mesh["pos"][loop], loop_uv, pattern_mm["height"], neighbours)
+    return seams.stitch_runs(
+        loop_uv, labels, SEAM_SPEC, STITCH_DASH_MM, STITCH_GAP_MM, trim_mm=STITCH_TRIM_MM
+    )
 
 
 def fit_transform(art_bbox, panel_w, panel_h):
@@ -433,9 +417,17 @@ def main():
     # line on this model, because the UVs are the actual sewing pattern.
     glb = Glb(ROOT / "assets" / "tshirt.glb")
     meshes = {m["node"]: m for m in glb.meshes()}
-    collar_meshes = [
-        meshes[panels[p]["outer_node"]] for p in ("collar_a", "collar_b") if p in panels
-    ]
+    def positions(names):
+        out = [meshes[panels[n]["outer_node"]]["pos"] for n in names if n in panels]
+        return np.vstack(out) if out else np.empty((0, 3))
+
+    def neighbours_for(panel):
+        """Neighbour point clouds for classifying one panel, EXCLUDING itself."""
+        return dict(
+            collar=positions([n for n in ("collar_a", "collar_b") if n != panel]),
+            sleeves=positions([n for n in ("sleeve_r", "sleeve_l") if n != panel]),
+            bodies=positions([n for n in ("front", "back") if n != panel]),
+        )
 
     for name, spec in PANELS.items():
         pm = panels[name]["pattern_mm"]
@@ -496,24 +488,7 @@ def main():
             overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
             od = ImageDraw.Draw(overlay)
             width_px = max(1, int(round(STITCH_WIDTH_MM * ppmss)))
-            neck_pts = neckline_uv(mesh, pm, collar_meshes)
-            primary = inset_with_neckline(name, h_mm, neck_pts)
-            runs = seams.seam_polylines(
-                mesh, pm, primary, STITCH_DASH_MM, STITCH_GAP_MM,
-                where_fn=stitch_where(name, h_mm),
-            )
-            # Second row of the double-needle hem, offset further in. Run as a
-            # separate pass rather than threaded through inset_fn: the row count
-            # varies along the boundary, and splitting the loop twice for that
-            # is far more code than simply asking for the rows we want.
-            runs += seams.seam_polylines(
-                mesh,
-                pm,
-                lambda u, v: primary(u, v) + DOUBLE_ROW_MM,
-                STITCH_DASH_MM,
-                STITCH_GAP_MM,
-                where_fn=hem_row_where(name, h_mm),
-            )
+            runs = panel_stitches(name, mesh, pm, neighbours_for(name))
             for run in runs:
                 od.line(
                     [(x * ppmss, y * ppmss) for x, y in run],

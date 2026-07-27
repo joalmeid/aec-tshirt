@@ -93,32 +93,44 @@ def offset_inward(poly, dist):
     out = poly + normal * dist[:, None]
     if abs(_signed_area(out)) > abs(_signed_area(poly)):
         out = poly - normal * dist[:, None]
+
+    # Reject a contour that the offset turns inside out. Offsetting inward can
+    # only shrink a shape; if the signed area flips sign or all but vanishes,
+    # the contour was narrower than twice the inset and has collapsed through
+    # itself, and what rasterises is a line cutting straight across the panel.
+    #
+    # This is not hypothetical -- the sleeve mesh's boundary includes 22mm-wide
+    # underarm slivers, and offsetting those by the 20mm hem inset is exactly
+    # what drew a diagonal across both sleeves and through the SCARPA badge.
+    before, after = _signed_area(poly), _signed_area(out)
+    if before == 0 or after / before < 0.05:
+        return None
     return out
 
 
-def resample(poly, step_mm):
+def resample(poly, step_mm, closed=True):
     """Even arc-length resampling, so dashes come out a constant length."""
-    seg = np.linalg.norm(np.diff(np.vstack([poly, poly[:1]]), axis=0), axis=1)
+    pts = np.vstack([poly, poly[:1]]) if closed else np.asarray(poly, dtype=float)
+    seg = np.linalg.norm(np.diff(pts, axis=0), axis=1)
     s = np.concatenate([[0.0], np.cumsum(seg)])
     total = s[-1]
     if total <= 0:
         return poly, 0.0
     n = max(2, int(round(total / step_mm)))
-    targets = np.linspace(0.0, total, n, endpoint=False)
-    closed = np.vstack([poly, poly[:1]])
-    x = np.interp(targets, s, closed[:, 0])
-    y = np.interp(targets, s, closed[:, 1])
+    targets = np.linspace(0.0, total, n, endpoint=not closed)
+    x = np.interp(targets, s, pts[:, 0])
+    y = np.interp(targets, s, pts[:, 1])
     return np.stack([x, y], axis=1), total
 
 
-def dashes(poly, dash_mm, gap_mm, step_mm=0.35):
-    """Split a closed polyline into dash segments of constant arc length.
+def dashes(poly, dash_mm, gap_mm, step_mm=0.35, closed=True):
+    """Split a polyline into dash segments of constant arc length.
 
     The dash pattern is stretched by up to half a step so a whole number of
-    dashes fits the loop -- otherwise every seam ends in a stub where the
-    pattern wraps past the start point.
+    dashes fits the run -- otherwise a closed seam ends in a stub where the
+    pattern wraps past the start point, and an open one ends in a half dash.
     """
-    pts, total = resample(poly, step_mm)
+    pts, total = resample(poly, step_mm, closed=closed)
     if total <= 0 or len(pts) < 2:
         return []
     period = dash_mm + gap_mm
@@ -126,8 +138,9 @@ def dashes(poly, dash_mm, gap_mm, step_mm=0.35):
     period = total / reps
     duty = dash_mm / (dash_mm + gap_mm)
 
-    seg = np.linalg.norm(np.diff(np.vstack([pts, pts[:1]]), axis=0), axis=1)
-    s = np.concatenate([[0.0], np.cumsum(seg)])[:-1]
+    ends = np.vstack([pts, pts[:1]]) if closed else pts
+    seg = np.linalg.norm(np.diff(ends, axis=0), axis=1)
+    s = np.concatenate([[0.0], np.cumsum(seg)])[: len(pts)]
     on = (s % period) < period * duty
 
     out, run = [], []
@@ -143,38 +156,128 @@ def dashes(poly, dash_mm, gap_mm, step_mm=0.35):
     return out
 
 
-def seam_polylines(mesh, pattern_mm, inset_fn, dash_mm=3.0, gap_mm=1.5, where_fn=None):
-    """Every stitch dash for one panel, in pattern millimetres.
+def nearest_mm(points, target):
+    """Distance in MILLIMETRES from each point to the nearest target vertex.
 
-    `inset_fn(u, v)` returns how far in from the boundary the stitch sits, given
-    a point on the boundary in panel millimetres -- letting a hem sit deeper than
-    a shoulder seam on the same continuous loop.
-
-    `where_fn(u, v)` decides whether that stretch of boundary is stitched at all.
-    It matters because a seam joins TWO panels, and each one's island boundary
-    runs along it: stitching both draws the armhole twice, a few millimetres
-    apart, and the neckline three times once the collar bands join in. Real
-    topstitching shows once, so each seam is claimed by exactly one panel.
+    Positions in the glTF are metres, so the result is scaled. Used to work out
+    which garment piece a stretch of boundary is sewn to, which is what says
+    whether it is a neckline, an armhole, a side seam or a free hem.
     """
-    uv = mesh["uv"] - np.array([pattern_mm["u0"], pattern_mm["v0"]])
+    if len(target) == 0:
+        return np.full(len(points), np.inf)
+    d2 = ((points[:, None, :] - target[None, :, :]) ** 2).sum(-1)
+    return np.sqrt(d2.min(axis=1)) * 1000.0
+
+
+def inward_sign(poly):
+    """+1 or -1: which way the right-hand edge normal points INTO the shape.
+
+    Settled by measuring, not by assuming a winding: offset the closed loop one
+    way and see whether it shrank.
+    """
+    e = np.roll(poly, -1, axis=0) - poly
+    e /= np.maximum(np.linalg.norm(e, axis=1, keepdims=True), 1e-9)
+    n = np.stack([e[:, 1], -e[:, 0]], axis=1)
+    step = max(1e-6, 0.001 * float(np.abs(poly).max()))
+    return 1.0 if abs(_signed_area(poly + n * step)) < abs(_signed_area(poly)) else -1.0
+
+
+def offset_run(run_pts, dist, sign):
+    """Offset an OPEN polyline, using one-sided normals at its two ends.
+
+    This is why runs are offset individually rather than sliced out of an
+    offset of the whole loop. At a run's end the loop turns into the next seam,
+    so a whole-loop offset has already begun rotating there -- and the slice
+    inherits that rotation as a hook curling back on itself. Two of those
+    meeting at the sleeve's underarm is what drew a cross under each cuff.
+
+    An endpoint here takes the normal of its single adjacent edge, so the run
+    ends square, exactly where its seam ends.
+    """
+    p = np.asarray(run_pts, dtype=float)
+    if len(p) < 2:
+        return p
+    e = np.diff(p, axis=0)
+    e /= np.maximum(np.linalg.norm(e, axis=1, keepdims=True), 1e-9)
+    en = np.stack([e[:, 1], -e[:, 0]], axis=1)  # right-hand normal per edge
+
+    nrm = np.empty_like(p)
+    nrm[0] = en[0]
+    nrm[-1] = en[-1]
+    if len(p) > 2:
+        nrm[1:-1] = en[:-1] + en[1:]
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-9)
+    return p + sign * nrm * dist
+
+
+def trim_ends(pts, mm):
+    """Drop `mm` of arc length from both ends of an open polyline.
+
+    A pattern piece's corners are rounded, so the last stretch of a run is
+    already curving into the next seam. Offsetting that follows the curve and
+    leaves a small hook at each end. Stopping short is also what real
+    topstitching does -- a seam is not sewn into its own corner.
+    """
+    p = np.asarray(pts, dtype=float)
+    if len(p) < 3 or mm <= 0:
+        return p
+    seg = np.linalg.norm(np.diff(p, axis=0), axis=1)
+    s = np.concatenate([[0.0], np.cumsum(seg)])
+    if s[-1] <= 2 * mm + 1e-6:
+        return p
+    keep = (s >= mm) & (s <= s[-1] - mm)
+    return p[keep] if keep.sum() >= 2 else p
+
+
+def label_runs(labels):
+    """Contiguous same-label stretches of a CLOSED loop, as index arrays.
+
+    A run that wraps past index 0 is stitched back together, so a seam crossing
+    the loop's arbitrary start point stays one run rather than two stubs.
+    """
+    n = len(labels)
+    if n == 0:
+        return []
+    bounds = [i for i in range(n) if labels[i] != labels[i - 1]]
+    if not bounds:
+        return [(labels[0], np.arange(n))]
+    runs = []
+    for k, start in enumerate(bounds):
+        end = bounds[(k + 1) % len(bounds)]
+        idx = np.arange(start, end if end > start else end + n) % n
+        runs.append((labels[start], idx))
+    return runs
+
+
+def stitch_runs(loop_uv, labels, spec, dash_mm=3.0, gap_mm=1.5, trim_mm=0.0):
+    """Dashes for one boundary loop, one run per seam.
+
+    `spec` maps a label to {"inset": mm, "rows": n, "row_gap": mm}, or to None
+    for seams that are not topstitched.
+
+    Each seam is offset and dashed INDEPENDENTLY, and that is the point. The
+    previous version offset the whole loop as one curve, so the stitch travelled
+    around every corner -- shoulder tip, armpit, hem-to-side junction -- where an
+    angle-bisector offset overshoots or self-intersects. Real topstitching stops
+    at those corners, and so does this.
+    """
+    sign = inward_sign(loop_uv)
+    whole = len(label_runs(labels)) == 1
+
     out = []
-    for loop in boundary_loops(mesh["idx"]):
-        poly = uv[loop]
-        inset = np.array([inset_fn(p[0], p[1]) for p in poly])
-        offset = offset_inward(poly, inset)
-        if where_fn is None:
-            out.extend(dashes(offset, dash_mm, gap_mm))
+    for label, idx in label_runs(labels):
+        rule = spec.get(label)
+        if not rule or len(idx) < 4:
             continue
-        # Split the loop into the runs that are stitched, then dash each run.
-        keep = np.array([bool(where_fn(p[0], p[1])) for p in poly])
-        if not keep.any():
-            continue
-        if keep.all():
-            out.extend(dashes(offset, dash_mm, gap_mm))
-            continue
-        idx = np.nonzero(keep)[0]
-        breaks = np.nonzero(np.diff(idx) != 1)[0]
-        for run in np.split(idx, breaks + 1):
-            if len(run) > 3:
-                out.extend(dashes(offset[run], dash_mm, gap_mm))
+        for row in range(rule.get("rows", 1)):
+            inset = rule["inset"] + row * rule.get("row_gap", 0.0)
+            if whole:
+                # A label covering the entire boundary really is a closed ring.
+                offset = offset_inward(loop_uv, inset)
+                if offset is None:
+                    continue
+                out.extend(dashes(offset, dash_mm, gap_mm, closed=True))
+            else:
+                run = trim_ends(loop_uv[idx], rule.get("trim", trim_mm))
+                out.extend(dashes(offset_run(run, inset, sign), dash_mm, gap_mm, closed=False))
     return out
