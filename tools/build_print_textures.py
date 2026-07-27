@@ -89,6 +89,30 @@ INK = (34, 34, 33)  # #222221, the artwork's own black
 
 ART_MARK_BOX = (71.25, 65.61, 76.56, 69.98)  # obj 25 placement, artwork mm
 
+# SCARPA's placement on the sleeve, as fractions of the sleeve pattern piece so
+# the intent survives a change of panel size.
+#
+# u: 0.5 is the outer face of the tube -- the outermost point of BOTH sleeves
+#    sits at half the unrolled width -- so the badge faces squarely out to the
+#    wearer's left and reads in full from a side view.
+#
+# v: 0 is the sleeve cap (shoulder), 1.0 the cuff. Note that pattern v is NOT
+#    linear with how far down the sleeve the badge LOOKS: the top of the pattern
+#    is the cap curving up into the armhole, so it compresses on screen.
+#    Measured on the outward-facing half of the tube:
+#
+#      pattern v    17%  34%  49%  59%  69%  75%  83%  93%
+#      looks like   13%  24%  34%  42%  59%  66%  72%  79%
+#
+#    The brief is "a quarter of the way up from the cuff", judged by eye off a
+#    render, so it is a fraction of the VISIBLE sleeve -- 75% down it. That is
+#    pattern v 0.877, not 0.75. Placing it at 0.75 lands at 66% and still reads
+#    as too high.
+SCARPA_ACROSS = 0.5
+SCARPA_ALONG = 0.877
+SCARPA_W_MM = 105.0
+SCARPA_H_MM = 12.6
+
 # Palette read straight off the vector artwork.
 STRIPE_LIGHT = "#c0d174"
 STRIPE_MID = "#98a64f"
@@ -154,11 +178,13 @@ PANELS = {
         px_per_mm=3.0,
         fit=None,
         ops=[
-            # Centred on the sleeve's OUTER face (texture x~198mm), so the badge
-            # faces squarely out to the wearer's left and reads in full from a
-            # side view, with only its leading edge showing head-on. 105 x
-            # 12.6mm, sitting about a third of the way down the 204mm sleeve.
-            dict(kind="stencil", stencil=SCARPA_STENCIL, box=(145.5, 64.0, 250.5, 76.6), colour=INK),
+            dict(
+                kind="stencil",
+                stencil=SCARPA_STENCIL,
+                centre_frac=(SCARPA_ACROSS, SCARPA_ALONG),
+                size_mm=(SCARPA_W_MM, SCARPA_H_MM),
+                colour=INK,
+            ),
         ],
     ),
     "collar_a": dict(px_per_mm=4.0, fit=None, ops=[]),
@@ -293,6 +319,13 @@ def main():
                 )
             elif op["kind"] == "stencil":
                 box = op.get("box")
+                if box is None and "centre_frac" in op:
+                    # Positioned as a fraction of the panel, sized in real
+                    # millimetres -- moving it never resizes it.
+                    cx = op["centre_frac"][0] * w_mm
+                    cy = op["centre_frac"][1] * h_mm
+                    sw, sh = op["size_mm"]
+                    box = (cx - sw / 2, cy - sh / 2, cx + sw / 2, cy + sh / 2)
                 if box is None:
                     ax0, ay0, ax1, ay1 = op["art_box"]
                     p0, p1 = xf(ax0, ay0), xf(ax1, ay1)
