@@ -35,11 +35,24 @@ PX_PER_MM = 4  # only for the human-facing guide images, not the final textures
 # reading the .glb's own node names -- do NOT infer these from vertex counts or
 # camera-relative position, both of which have silently picked the wrong mesh
 # here before (the back panel has more vertices than the front).
+#
+# Panel names follow the WEARER's left/right, matching the PSD's layer names and
+# how the design is described ("green lines down the right side", "SCARPA on the
+# left sleeve"). Mapping those onto nodes needs one fact, and it is the fact this
+# project has got wrong four times:
+#
+#   Babylon is left-handed, so screen-right = forward x up. With the camera on
+#   +Z looking back at the origin that is (+1,0,0) — world +X is the VIEWER'S
+#   RIGHT, which is the wearer's LEFT.
+#
+# Therefore Sleeves_Node_6 (x>0) is the wearer's LEFT sleeve and Node_7 (x<0)
+# the wearer's RIGHT. Verified against a browser screenshot of the real scene,
+# not derived — deriving it is what produced the previous three swaps.
 PANEL_GROUPS = {
     "front": "Body_Front_Node_4",
     "back": "Body_Back_Node_5",
-    "sleeve_r": "Sleeves_Node_6",  # world x > 0
-    "sleeve_l": "Sleeves_Node_7",  # world x < 0
+    "sleeve_r": "Sleeves_Node_7",  # world x < 0 -> viewer's LEFT  -> wearer's right
+    "sleeve_l": "Sleeves_Node_6",  # world x > 0 -> viewer's RIGHT -> wearer's left
     "collar_a": "Ribbing_Node_2",
     "collar_b": "Ribbing_Node_3",
 }

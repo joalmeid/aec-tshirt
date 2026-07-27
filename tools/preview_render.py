@@ -9,11 +9,15 @@ orientation, mirroring and panel coverage is trustworthy.
 
 It deliberately reproduces two Babylon conventions so its answers transfer:
 
-  * a left-handed basis, where screen-right is cross(up, forward). With an
-    ArcRotateCamera at alpha=pi/2 that puts world +X on the viewer's LEFT --
-    which is what the scene's own screenshot-verified comments record.
+  * a left-handed basis, where screen-right is cross(forward, up). With an
+    ArcRotateCamera at alpha=pi/2 that puts world +X on the viewer's RIGHT,
+    which is the WEARER'S LEFT.
   * millimetre pattern UVs normalised per panel exactly the way panels.json
     says Babylon should do it via uScale/uOffset.
+
+Trust it only so far. It had the handedness backwards once, which mirrored
+every render and led to a negative uScale being written into the scene to
+correct a mirror that was not there. Confirm anything load-bearing in a browser.
 
 Usage:
   python3 tools/preview_render.py --textures calib      # calib-<panel>.png
@@ -34,18 +38,24 @@ ROOT = Path(__file__).resolve().parent.parent
 PATTERN = ROOT / "source" / "pattern"
 TEXDIR = ROOT / "assets" / "textures"
 
-# Which mesh nodes actually get a print. Inner shells and rims stay plain, the
-# way the real garment's inside face is blank -- and rendering them would just
-# z-fight with the outer shell they sit 0.5mm behind.
-OUTER_NODE = {
-    "Object_10": "front",
-    "Object_14": "back",
-    "Object_18": "sleeve_r",
-    "Object_20": "sleeve_l",
-    "Object_6": "collar_a",
-    "Object_8": "collar_b",
-}
+def outer_node_map(panels):
+    """node name -> panel name, for the one shell per panel that gets a print.
 
+    Read from panels.json rather than hardcoded. It used to be a second copy of
+    the mapping here, which silently went stale the moment the sleeve nodes were
+    swapped at their real source in tools/extract_pattern.py -- the textures were
+    corrected but this tool kept rendering the old pairing.
+
+    Only the outer shell is drawn. A body panel is three meshes (outer shell,
+    inner shell 0.5mm behind with flipped normals, and the rim joining them);
+    drawing the inner one would just z-fight, and the real garment's inside face
+    is blank anyway.
+    """
+    return {info["outer_node"]: name for name, info in panels.items()}
+
+# Named from the WEARER's point of view, like every other name in this project.
+# "left" is the wearer's left sleeve, which is world +X and renders on the
+# viewer's right.
 VIEWS = {
     "front": (0.0, 0.0, 1.0),
     "back": (0.0, 0.0, -1.0),
@@ -63,12 +73,24 @@ DEFAULT_FRAMING = (3.0, 28.0)
 
 
 def look_at_lh(eye, target, up=(0.0, 1.0, 0.0)):
+    """Babylon's left-handed camera basis.
+
+    screen-right = forward x up. With a camera on +Z looking back at the origin
+    that gives (+1,0,0), i.e. world +X lands on the VIEWER'S RIGHT.
+
+    This was cross(up, forward) — the other handedness — and every conclusion
+    drawn from this tool came out mirrored as a result. The calibration pass
+    read the mirror, concluded the front panel needed flipping, and a negative
+    uScale went into the scene to correct a mirror that did not exist. Verified
+    now against a real Babylon screenshot rather than re-derived, because
+    deriving it is exactly what went wrong.
+    """
     f = np.array(target, dtype=float) - np.array(eye, dtype=float)
     f /= np.linalg.norm(f)
     up = np.array(up, dtype=float)
-    r = np.cross(up, f)  # left-handed: screen-right = up x forward
+    r = np.cross(f, up)
     r /= np.linalg.norm(r)
-    u = np.cross(f, r)
+    u = np.cross(r, f)
     return r, u, f
 
 
@@ -81,19 +103,23 @@ def main():
     ap.add_argument("--mirror-u", action="store_true", help="sample the texture with U mirrored")
     ap.add_argument(
         "--cull",
-        default="cw",
+        default="ccw",
         choices=["cw", "ccw", "none"],
+        # The screen-space signed area changes sign with the corrected camera
+        # basis, so this default flipped back too. Needing to override it is a
+        # signal that the basis is wrong again, not that the model changed.
         help="which screen-space winding to treat as front-facing",
     )
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
     panels = json.loads((PATTERN / "panels.json").read_text())["panels"]
+    node_to_panel = outer_node_map(panels)
     glb = Glb(ROOT / "assets" / "tshirt.glb")
-    meshes = [m for m in glb.meshes() if m["node"] in OUTER_NODE]
+    meshes = [m for m in glb.meshes() if m["node"] in node_to_panel]
 
     textures = {}
-    for node, panel in OUTER_NODE.items():
+    for node, panel in node_to_panel.items():
         p = TEXDIR / f"{args.textures}-{panel}.png"
         if p.exists():
             textures[panel] = np.asarray(Image.open(p).convert("RGB"), dtype=np.float64) / 255.0
@@ -125,7 +151,7 @@ def main():
     ambient = 0.42
 
     for m in meshes:
-        panel = OUTER_NODE[m["node"]]
+        panel = node_to_panel[m["node"]]
         tex = textures.get(panel)
         if tex is None:
             continue

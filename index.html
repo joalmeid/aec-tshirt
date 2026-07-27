@@ -187,15 +187,20 @@
         // is no texture border for mip-mapping to bleed against.
         //
         // uScale/uOffset/vScale/vOffset below map those millimetre UVs into
-        // 0..1. uScale is NEGATIVE because the texture is authored as the panel
-        // seen from OUTSIDE (left-to-right as you look at the garment) while
-        // pattern u runs the other way — u increases with world +X, which this
-        // scene's left-handed camera puts on the viewer's LEFT. That mirror was
-        // settled by rendering tools/make_calibration.py's grid textures rather
-        // than reasoned from handedness: the glTF V convention, the pattern's
-        // u/X sign and the camera all interact, and argument is unreliable
-        // there. Regenerate these numbers with tools/extract_pattern.py if the
-        // model is ever replaced.
+        // 0..1, and every uScale is POSITIVE. Texture space is the panel seen
+        // from OUTSIDE, left-to-right, which is the same direction pattern u
+        // already runs in — checked per panel against the model, not assumed:
+        // front corr(u,X)=+0.99 from +Z, back corr(u,X)=-0.99 from -Z, and each
+        // sleeve corr(u,Z)=-/+0.77 from -/+X. All four agree.
+        //
+        // An earlier version had these NEGATED. That was compensating for a bug
+        // in tools/preview_render.py, which built its camera basis with the
+        // wrong handedness and so mirrored every render used to verify the
+        // convention. Babylon is left-handed: screen-right is cross(forward,up),
+        // which puts world +X on the viewer's RIGHT. If the print ever looks
+        // mirrored again, suspect that tool before these numbers.
+        //
+        // Regenerate with tools/extract_pattern.py if the model is replaced.
         // Texture paths are relative to ASSET_ROOT so everything below stays
         // character-identical to playground.js, which mirrors this scene and
         // only differs by loading from raw.githubusercontent.com instead.
@@ -206,45 +211,44 @@
             node: "Body_Front_Node_4",
             texture: "textures/print-front.png",
             // pattern piece 511.63 x 703.22 mm
-            uScale: -0.00195454, uOffset: 0.49999156,
+            uScale: 0.00195454, uOffset: 0.50000844,
             vScale: 0.00142203, vOffset: 0.57734550,
           },
           back: {
             node: "Body_Back_Node_5",
             texture: "textures/print-back.png",
             // pattern piece 511.54 x 729.04 mm
-            uScale: -0.00195488, uOffset: 0.50000785,
+            uScale: 0.00195488, uOffset: 0.49999215,
             vScale: 0.00137167, vOffset: 0.52828288,
           },
-          // "left"/"right" follow the WEARER, matching both the glTF node names
-          // and the PSD's layer names. Sleeves_Node_6 is world x>0, which this
-          // scene renders on the VIEWER'S LEFT — it is the striped sleeve.
+          // Names follow the WEARER. Sleeves_Node_7 is world x<0, which renders
+          // on the viewer's LEFT, so it is the wearer's RIGHT sleeve.
           sleeve_r: {
-            node: "Sleeves_Node_6",
+            node: "Sleeves_Node_7",
             texture: "textures/print-sleeve_r.png",
-            // pattern piece 397.13 x 204.03 mm
-            uScale: -0.00251807, uOffset: 0.50000008,
+            // pattern piece 397.13 x 204.03 mm - the striped sleeve
+            uScale: 0.00251807, uOffset: 0.50000008,
             vScale: 0.00490134, vOffset: 0.49992072,
           },
           sleeve_l: {
-            node: "Sleeves_Node_7",
+            node: "Sleeves_Node_6",
             texture: "textures/print-sleeve_l.png",
-            // pattern piece 397.13 x 204.03 mm — carries the SCARPA badge
-            uScale: -0.00251807, uOffset: 0.49999992,
+            // pattern piece 397.13 x 204.03 mm - carries the SCARPA badge
+            uScale: 0.00251807, uOffset: 0.49999992,
             vScale: 0.00490134, vOffset: 0.49992072,
           },
           collar_a: {
             node: "Ribbing_Node_2",
             texture: "textures/print-collar_a.png",
             // pattern piece 187.30 x 17.00 mm
-            uScale: -0.00533901, uOffset: 0.50000000,
+            uScale: 0.00533901, uOffset: 0.50000000,
             vScale: 0.05882353, vOffset: 0.50000000,
           },
           collar_b: {
             node: "Ribbing_Node_3",
             texture: "textures/print-collar_b.png",
             // pattern piece 272.32 x 17.00 mm
-            uScale: -0.00367209, uOffset: 0.50000000,
+            uScale: 0.00367209, uOffset: 0.50000000,
             vScale: 0.05882353, vOffset: 0.50000000,
           },
         };

@@ -32,23 +32,33 @@ import vectorart
 
 # ------------------------------------------------------------------ convention
 # A panel texture is authored as "the panel seen from OUTSIDE, laid flat" --
-# x runs left-to-right exactly as you'd see it looking at the finished garment,
-# which is the same convention the technical flat uses. That is why artwork x
-# maps straight through with no flip.
+# x runs left-to-right exactly as you'd see it looking at that panel from
+# outside the garment, which is the same convention the technical flat uses.
+# That is why artwork x maps straight through with no flip.
 #
-# It is NOT raw pattern-u order. Pattern u runs the other way (u increases with
-# world +X, which Babylon's left-handed camera puts on the viewer's LEFT), so
-# the mapping is closed by sampling with a mirrored U -- uScale negative in
-# Babylon, --mirror-u in tools/preview_render.py. This was settled empirically
-# with tools/make_calibration.py rather than argued from handedness, because the
-# glTF V convention, the pattern's u/X sign and the left-handed camera all
-# interact and reasoning about them is unreliable.
+# This is also raw pattern-u order, so the whole mapping is simply
 #
-# Consequences worth remembering when placing anything on a sleeve:
-#   texture_x_mm = sleeve_width_mm - pattern_u_mm
-# so for sleeve_r (world x>0, the VIEWER'S LEFT sleeve) the front of the sleeve
-# is pattern u~100 = texture x~297, and for sleeve_l (viewer's right) the front
-# is pattern u~300 = texture x~97. The outer face of both is texture x~198.
+#   texture_x_mm = pattern_u_mm
+#
+# and Babylon needs a POSITIVE uScale. Checked against the model rather than
+# assumed: for each panel, does u increase toward the right when that panel is
+# viewed from outside?
+#
+#   front               corr(u, X) = +0.99   seen from +Z   yes
+#   back                corr(u, X) = -0.99   seen from -Z   yes
+#   Sleeves_Node_6      corr(u, Z) = -0.77   seen from +X   yes
+#   Sleeves_Node_7      corr(u, Z) = +0.77   seen from -X   yes
+#
+# All four agree, so there is no per-panel special case.
+#
+# An earlier version had this backwards and compensated with a negative uScale.
+# The cause was tools/preview_render.py building its camera basis with the wrong
+# handedness, which mirrored every render used to "verify" the convention. If
+# something here ever looks mirrored again, suspect that tool before this file.
+#
+# Placement on a sleeve, which is the tube unrolled: the outer face of BOTH
+# sleeves is at texture x ~198mm. The front of the sleeve is x~100 on
+# Sleeves_Node_6 (wearer's left) and x~300 on Node_7 (wearer's right).
 
 ROOT = Path(__file__).resolve().parent.parent
 PATTERN = ROOT / "source" / "pattern"
@@ -122,8 +132,9 @@ PANELS = {
     # sleeve from one side only, so no bbox fit relates the two. Everything on a
     # sleeve is therefore placed directly in sleeve-panel millimetres.
     #
-    # sleeve_r is the wearer's right sleeve = world x>0 = the VIEWER'S LEFT one,
-    # which is the striped sleeve in the reference. sleeve_l carries SCARPA.
+    # sleeve_r is the wearer's RIGHT sleeve (Sleeves_Node_7, world x<0, which
+    # renders on the viewer's left) and is the striped one in the reference.
+    # sleeve_l is the wearer's LEFT (Node_6, x>0) and carries SCARPA only.
     "sleeve_r": dict(
         px_per_mm=3.0,
         fit=None,
@@ -143,10 +154,11 @@ PANELS = {
         px_per_mm=3.0,
         fit=None,
         ops=[
-            # Centred on the front-outer quadrant of this sleeve, where the
-            # reference shows it: texture x~97 is the sleeve front, x~198 the
-            # outermost point.
-            dict(kind="stencil", stencil=SCARPA_STENCIL, box=(78.0, 64.0, 183.0, 76.6), colour=INK),
+            # Centred on the sleeve's OUTER face (texture x~198mm), so the badge
+            # faces squarely out to the wearer's left and reads in full from a
+            # side view, with only its leading edge showing head-on. 105 x
+            # 12.6mm, sitting about a third of the way down the 204mm sleeve.
+            dict(kind="stencil", stencil=SCARPA_STENCIL, box=(145.5, 64.0, 250.5, 76.6), colour=INK),
         ],
     ),
     "collar_a": dict(px_per_mm=4.0, fit=None, ops=[]),
