@@ -192,7 +192,20 @@ export const createScene = async function () {
     // invertY:true, which flips the upload and would render every print
     // upside down on UVs that came out of a .glb. The 4th argument is
     // invertY; the 3rd is noMipmap, left false so mip-mapping stays on.
-    const tex = new BABYLON.Texture(ASSET_ROOT + panel.texture, scene, false, false);
+    // onError matters more than it looks. A texture that fails to load is not
+    // an obvious failure on screen: Babylon substitutes its built-in fallback,
+    // a 256x256 red-and-black checkerboard, so the shirt renders "fine" in
+    // bright red and nothing is logged about why. Naming the URL turns that
+    // into a one-line diagnosis — usually the asset root pointing at a branch
+    // or commit where assets/textures/ does not exist yet.
+    const url = ASSET_ROOT + panel.texture;
+    const tex = new BABYLON.Texture(url, scene, false, false, undefined, null, (message, exception) => {
+      console.error(
+        `[${name}] texture failed to load: ${url}\n` +
+          "The shirt will render with Babylon's red/black fallback checkerboard.\n" +
+          (message || exception || "")
+      );
+    });
     tex.uScale = panel.uScale;
     tex.uOffset = panel.uOffset;
     tex.vScale = panel.vScale;
