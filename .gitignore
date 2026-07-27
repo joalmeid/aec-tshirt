@@ -1,0 +1,12 @@
+# Diagnostic renders from tools/preview_render.py. Regenerate on demand; they
+# are a debugging aid, not an input to anything.
+source/preview/
+
+# The PDF embeds a 3MB copy of the PSD mockup preview alongside the artwork.
+# tools/pdf_to_svg.py extracts every image it finds, but nothing consumes this
+# one -- only the two logo stencils (img25, img44) are used.
+source/artwork/pdf-images/img26_3000x3000.png
+
+# Python bytecode from the tools/
+__pycache__/
+*.pyc
