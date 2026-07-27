@@ -340,17 +340,20 @@ def draw_stripe_band(draw, x_start_mm, count, pitch_mm, width_mm, angle_deg, hei
         draw.polygon([(px * px_per_mm, py * px_per_mm) for px, py in pts], fill=cycle[i % len(cycle)])
 
 
-def draw_element(draw, paths, indices, art_to_pattern, px_per_mm, extend):
+def draw_element(img, paths, indices, art_to_pattern, px_per_mm, extend):
+    """Draw one design element. Contours of a path are filled as ONE shape, so
+    the counters in A, O, R, D, 0 and 6 stay open -- see vectorart.fill_contours.
+    """
     wanted = set(indices)
     for p in paths:
         if p["index"] not in wanted or not p["fill"]:
             continue
+        contours = []
         for sub in vectorart.subpaths(p["d"]):
             mm = [art_to_pattern(x * vectorart.PT_TO_MM, y * vectorart.PT_TO_MM) for x, y in sub]
             mm = extend_polygon(mm, extend)
-            pts = [(x * px_per_mm, y * px_per_mm) for x, y in mm]
-            if len(pts) > 2:
-                draw.polygon(pts, fill=p["fill"])
+            contours.append([(x * px_per_mm, y * px_per_mm) for x, y in mm])
+        vectorart.fill_contours(img, contours, p["fill"])
 
 
 def main():
@@ -377,7 +380,7 @@ def main():
 
         for op in spec["ops"]:
             if op["kind"] == "paths":
-                draw_element(d, art, op["paths"], xf, ppmss, op["extend"])
+                draw_element(img, art, op["paths"], xf, ppmss, op["extend"])
             elif op["kind"] == "stripes":
                 draw_stripe_band(
                     d,

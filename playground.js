@@ -137,9 +137,9 @@ export const createScene = async function () {
   // mirrored again, suspect that tool before these numbers.
   //
   // Regenerate with tools/extract_pattern.py if the model is replaced.
-  // Texture paths are relative to ASSET_ROOT (declared at the top of this
-  // file, pointing at raw.githubusercontent.com) so this block stays
-  // character-identical to the one in index.html.
+  // Texture paths are relative to ASSET_ROOT, declared at the top of this
+  // file, so everything below stays character-identical between index.html
+  // and playground.js -- the two differ only in where that root points.
   const PANELS = {
     front: {
       node: "Body_Front_Node_4",

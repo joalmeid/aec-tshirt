@@ -46,6 +46,15 @@
     const loadingEl = document.getElementById("loading");
     const fallbackEl = document.getElementById("fallback");
 
+    // Declared up here, before createScene, because the scene reads it while
+    // setting up the environment map — which happens well before the texture
+    // code further down. It previously sat next to the panel table inside
+    // createScene, so the environment lookup hit its temporal dead zone and
+    // threw "Cannot access 'ASSET_ROOT' before initialization" before the
+    // try/catch was even reached. playground.js declares its own at module
+    // scope, which is why only this file broke.
+    const ASSET_ROOT = "assets/";
+
     if (!BABYLON.Engine.isSupported()) {
       canvas.style.display = "none";
       loadingEl.style.display = "none";
@@ -186,10 +195,9 @@
         // mirrored again, suspect that tool before these numbers.
         //
         // Regenerate with tools/extract_pattern.py if the model is replaced.
-        // Texture paths are relative to ASSET_ROOT so everything below stays
-        // character-identical to playground.js, which mirrors this scene and
-        // only differs by loading from raw.githubusercontent.com instead.
-        const ASSET_ROOT = "assets/";
+        // Texture paths are relative to ASSET_ROOT, declared at the top of this
+        // file, so everything below stays character-identical between index.html
+        // and playground.js -- the two differ only in where that root points.
 
         const PANELS = {
           front: {

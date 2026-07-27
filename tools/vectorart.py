@@ -11,6 +11,7 @@ import json
 import re
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -84,21 +85,53 @@ def subpaths(d, steps=28):
     return subs
 
 
-def draw_paths(draw: ImageDraw.ImageDraw, paths, xf, only=None, fill_override=None):
-    """Fill `paths` into `draw`. `xf` maps artwork mm -> destination pixels.
+def fill_contours(img, contours, colour):
+    """Fill one path's contours as a single shape, keeping its holes open.
 
-    Every path in this artwork is a closed filled shape (the PDF strokes only
-    the technical-flat's seam lines, which we never want on a texture), so
-    filling each subpath independently is enough -- there are no holes that need
-    even-odd handling in the elements we place.
+    Contours are XOR-ed into a mask rather than filled one by one: a pixel is
+    inside when an odd number of contours covers it, so a letter's counter
+    punches a hole instead of painting over it.
+
+    Filling each contour independently -- which this used to do -- silently
+    solidified every glyph with a hole in it: both As, the O, both Rs, the D,
+    and the 0 and 6 of 2026.
+
+    This is the even-odd rule, which is what the PDF asks for on its `f*` paths.
+    It also matches `f` (nonzero) for everything here, because font outlines
+    wind inner contours opposite to outer ones. The two rules only disagree on
+    self-overlapping paths, and this artwork has none.
     """
+    polys = [c for c in contours if len(c) > 2]
+    if not polys:
+        return
+    xs = [p[0] for c in polys for p in c]
+    ys = [p[1] for c in polys for p in c]
+    x0, y0 = max(int(min(xs)) - 1, 0), max(int(min(ys)) - 1, 0)
+    x1 = min(int(max(xs)) + 2, img.width)
+    y1 = min(int(max(ys)) + 2, img.height)
+    if x1 <= x0 or y1 <= y0:
+        return
+
+    acc = np.zeros((y1 - y0, x1 - x0), dtype=bool)
+    for c in polys:
+        cell = Image.new("1", (x1 - x0, y1 - y0), 0)
+        ImageDraw.Draw(cell).polygon([(x - x0, y - y0) for x, y in c], fill=1)
+        acc ^= np.asarray(cell, dtype=bool)
+
+    if acc.any():
+        img.paste(colour, (x0, y0), Image.fromarray(acc))
+
+
+def draw_paths(draw_or_img, paths, xf, only=None, fill_override=None):
+    """Fill `paths` into an image. `xf` maps artwork mm -> destination pixels."""
+    img = getattr(draw_or_img, "_image", draw_or_img)
     for p in paths:
         if only is not None and p["index"] not in only:
             continue
         colour = fill_override or p["fill"]
         if not colour:
             continue
-        for sub in subpaths(p["d"]):
-            pts = [xf(x * PT_TO_MM, y * PT_TO_MM) for x, y in sub]
-            if len(pts) > 2:
-                draw.polygon(pts, fill=colour)
+        contours = [
+            [xf(x * PT_TO_MM, y * PT_TO_MM) for x, y in sub] for sub in subpaths(p["d"])
+        ]
+        fill_contours(img, contours, colour)
