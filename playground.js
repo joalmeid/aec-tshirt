@@ -43,55 +43,53 @@ export const createScene = async function () {
   camera.upperBetaLimit = Math.PI - 0.3;
   camera.minZ = 0.01; // default (1) clips nearby geometry at this model's small scale
 
-  // --- Lighting ---
-  const fillLight = new BABYLON.HemisphericLight(
-    "fillLight",
-    new BABYLON.Vector3(0, 1, 0),
+  // --- Lighting: image-based, from a studio environment ------------
+  //
+  // The shirt is lit almost entirely by the environment rather than by
+  // punctual lights. A PBR fabric needs an environment to reflect: the
+  // sheen term below is what makes cloth read as cloth, and it has
+  // nothing to work with under bare directional lights.
+  //
+  // This replaces a three-light Blinn-Phong rig (hemisphere fill, two
+  // mirrored keys, a green rim) that existed to fake what IBL does
+  // properly. Its keyLightBack also needed the sleeves excluded from it,
+  // because two directional lights summing on a curved surface clipped
+  // to a hard white streak — a Blinn-Phong artifact with no equivalent
+  // here, so that workaround is gone too.
+  scene.environmentTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(
+    ASSET_ROOT + "env/studio.env",
     scene
   );
-  fillLight.intensity = 0.6;
+  scene.environmentIntensity = 1.0;
 
-  // Two key lights, mirrored front/back (z-component flipped), so
-  // whichever panel the camera is orbited to face is lit — a single
-  // one-sided key light left the opposite panel dim/gray whenever the
-  // camera turned to view it (this model has separate front/back mesh
-  // panels, not one continuous double-sided shell).
+  // One soft key on top of the environment, purely for directional
+  // shaping so the form does not go flat. No specular of its own — the
+  // shine comes from the material and the environment.
   const keyLight = new BABYLON.DirectionalLight(
     "keyLight",
-    new BABYLON.Vector3(-1, -1.5, 1),
+    new BABYLON.Vector3(-0.55, -1, 0.45),
     scene
   );
   keyLight.position = new BABYLON.Vector3(4, 6, 4);
-  keyLight.intensity = 0.9;
-  // No true specular contribution from this light — the low-shine
-  // fabric look is meant to come from the material, not a highlight.
+  keyLight.intensity = 1.1;
   keyLight.specular = new BABYLON.Color3(0, 0, 0);
 
-  // Reduced from the original 0.9 (matching keyLight): at full
-  // intensity, this light's diffuse contribution stacks with
-  // keyLight's on the sleeves' curved (cylindrical) surface — their
-  // normals sweep through a band that faces both lights favorably at
-  // once, and the summed diffuse energy clipped to a hard white
-  // "shiny" streak there. The flatter torso panels don't show this
-  // because their normals stay mostly uniform, so they never enter
-  // that double-lit overlap band. Still enough fill to keep the back
-  // panel from reading dim/gray, without blowing out the sleeves.
-  const keyLightBack = new BABYLON.DirectionalLight(
-    "keyLightBack",
-    new BABYLON.Vector3(-1, -1.5, -1),
-    scene
-  );
-  keyLightBack.position = new BABYLON.Vector3(4, 6, -4);
-  keyLightBack.intensity = 0.45;
-  keyLightBack.specular = new BABYLON.Color3(0, 0, 0);
-
-  const rimLight = new BABYLON.DirectionalLight(
-    "rimLight",
-    new BABYLON.Vector3(1, 0.3, 1),
-    scene
-  );
-  rimLight.diffuse = new BABYLON.Color3(0.55, 0.75, 0.35); // event brand green
-  rimLight.intensity = 0.05;
+  // Tone mapping is ON now, which reverses an earlier decision. The note
+  // it replaces was correct at the time and for the right reason: under
+  // StandardMaterial with no environment, the scene was effectively LDR,
+  // so a tone curve had no over-range headroom to recover and merely
+  // darkened the mid-range. With a real HDR environment driving a PBR
+  // material that no longer holds — there are genuine over-1.0 values to
+  // compress, and without a curve the white fabric clips.
+  //
+  // KHR_PBR_NEUTRAL over ACES deliberately: it is built to leave
+  // in-gamut colour where it is and only compress highlights, so the
+  // brand greens stay on-brand. ACES is filmic and shifts them.
+  const imageProcessing = scene.imageProcessingConfiguration;
+  imageProcessing.toneMappingEnabled = true;
+  imageProcessing.toneMappingType =
+    BABYLON.ImageProcessingConfiguration.TONEMAPPING_KHR_PBR_NEUTRAL;
+  imageProcessing.exposure = 1.15;
 
   // Idle auto-rotate
   let userInteracting = false;
@@ -189,42 +187,83 @@ export const createScene = async function () {
     },
   };
 
+  // The knit weave, tiled in REAL millimetres. Because this model's UVs
+  // are in millimetres, uScale = 1/TILE_MM makes the fabric repeat every
+  // TILE_MM of actual garment — the same density on every panel, with no
+  // per-panel tuning and no guessing at a repeat count.
+  const KNIT_TILE_MM = 15.0; // must match tools/make_weave_normal.py
+
   function makePanelMaterial(name, panel) {
-    const mat = new BABYLON.StandardMaterial(name + "Mat", scene);
+    const mat = new BABYLON.PBRMaterial(name + "Mat", scene);
+
     // invertY MUST be false here. glTF puts the UV origin at the image's
     // TOP-left, and Babylon's own glTF loader creates its textures with
     // invertY:false to match — but this constructor defaults to
     // invertY:true, which flips the upload and would render every print
     // upside down on UVs that came out of a .glb. The 4th argument is
     // invertY; the 3rd is noMipmap, left false so mip-mapping stays on.
-    // onError matters more than it looks. A texture that fails to load is not
-    // an obvious failure on screen: Babylon substitutes its built-in fallback,
-    // a 256x256 red-and-black checkerboard, so the shirt renders "fine" in
-    // bright red and nothing is logged about why. Naming the URL turns that
-    // into a one-line diagnosis — usually the asset root pointing at a branch
-    // or commit where assets/textures/ does not exist yet.
+    //
+    // onError matters more than it looks. A texture that fails to load is
+    // not an obvious failure on screen: Babylon substitutes its built-in
+    // fallback, a 256x256 red-and-black checkerboard, so the shirt renders
+    // "fine" in bright red and nothing is logged about why. Naming the URL
+    // turns that into a one-line diagnosis — usually the asset root
+    // pointing at a branch or commit without assets/textures/ on it.
     const url = ASSET_ROOT + panel.texture;
-    const tex = new BABYLON.Texture(url, scene, false, false, undefined, null, (message, exception) => {
+    const albedo = new BABYLON.Texture(url, scene, false, false, undefined, null, (message, exception) => {
       console.error(
         `[${name}] texture failed to load: ${url}\n` +
           "The shirt will render with Babylon's red/black fallback checkerboard.\n" +
           (message || exception || "")
       );
     });
-    tex.uScale = panel.uScale;
-    tex.uOffset = panel.uOffset;
-    tex.vScale = panel.vScale;
-    tex.vOffset = panel.vOffset;
+    albedo.uScale = panel.uScale;
+    albedo.uOffset = panel.uOffset;
+    albedo.vScale = panel.vScale;
+    albedo.vOffset = panel.vOffset;
     // The transformed UVs land exactly in 0..1, but the 0.5mm rim meshes
     // that join each panel's outer and inner shell extend a hair past it.
     // Clamping makes them take the edge colour instead of wrapping round
     // to the opposite side of the print.
-    tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
-    tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-    mat.diffuseTexture = tex;
-    // White, so the texture alone decides colour.
-    mat.diffuseColor = new BABYLON.Color3(1, 1, 1);
-    mat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+    albedo.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+    albedo.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+    mat.albedoTexture = albedo;
+
+    const knit = new BABYLON.Texture(ASSET_ROOT + "textures/knit-normal.png", scene, false, false);
+    knit.uScale = 1 / KNIT_TILE_MM;
+    knit.vScale = 1 / KNIT_TILE_MM;
+    // WRAP, not CLAMP: unlike the print this texture is meant to repeat.
+    knit.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
+    knit.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+    // A normal map is direction data, not colour, so it must not be
+    // gamma-decoded on the way in.
+    knit.gammaSpace = false;
+    mat.bumpTexture = knit;
+    // Kept low. The relief is 0.16mm on a garment half a metre across, so
+    // at any sane camera distance this reads as fabric grain catching the
+    // light rather than as visible bumps.
+    mat.bumpTexture.level = 0.45;
+
+    // The .glb carries no TANGENT attribute, so Babylon derives the
+    // tangent frame per-pixel from screen-space derivatives. That is
+    // usually a quality compromise, but it is a good one here: this
+    // unwrap is a true flat pattern with under 4% stretch anywhere, so
+    // the derived frame is very close to a real one.
+
+    mat.metallic = 0.0;
+    mat.roughness = 0.82; // matte technical jersey
+
+    // Sheen is the whole reason for moving to PBR. It adds the soft
+    // retroreflective bloom at grazing angles that cloth has and that no
+    // amount of diffuse-plus-specular reproduces — it is Babylon's
+    // fabric-specific lobe. albedoScaling keeps it from simply making the
+    // shirt brighter by taking the sheen's energy out of the base layer.
+    mat.sheen.isEnabled = true;
+    mat.sheen.intensity = 0.4;
+    mat.sheen.roughness = 0.3;
+    mat.sheen.color = new BABYLON.Color3(1, 1, 1);
+    mat.sheen.albedoScaling = true;
+
     return mat;
   }
 
@@ -236,7 +275,7 @@ export const createScene = async function () {
       result.meshes.map((m) => m.name)
     );
 
-    // Group meshes by their glTF PARENT node name. That name is the only
+      // Group meshes by their glTF PARENT node name. That name is the only
     // reliable identifier here — an earlier version picked the front
     // panel by largest-vertex-count and silently got the back one, which
     // happens to have more vertices, and picking sleeves by world-X sign
@@ -245,34 +284,36 @@ export const createScene = async function () {
     // normals, and the rim band joining them) and one for each sleeve.
     const byNode = new Map();
     result.meshes.forEach((m) => {
-    const parent = m.parent && m.parent.name;
-    if (!parent) return;
-    if (!byNode.has(parent)) byNode.set(parent, []);
-    byNode.get(parent).push(m);
+      const parent = m.parent && m.parent.name;
+      if (!parent) return;
+      if (!byNode.has(parent)) byNode.set(parent, []);
+      byNode.get(parent).push(m);
     });
 
     // Anything the model ships that we have no pattern data for stays
-    // plain white rather than keeping its original material.
-    const baseMat = new BABYLON.StandardMaterial("baseMat", scene);
-    baseMat.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
-    baseMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+    // plain white rather than keeping its original material. PBR like the
+    // rest, so it sits under the same environment light — a StandardMaterial
+    // here would ignore the environment entirely and read as a flat grey
+    // patch next to the panels around it.
+    const baseMat = new BABYLON.PBRMaterial("baseMat", scene);
+    baseMat.albedoColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+    baseMat.metallic = 0.0;
+    baseMat.roughness = 0.82;
     result.meshes.forEach((m) => {
-    if (m.material) m.material = baseMat;
+      if (m.material) m.material = baseMat;
     });
 
-    const sleeveMeshes = [];
     Object.entries(PANELS).forEach(([name, panel]) => {
-    const group = byNode.get(panel.node);
-    if (!group || !group.length) {
-      console.warn("no meshes found under node", panel.node, "for panel", name);
-      return;
-    }
-    const mat = makePanelMaterial(name, panel);
-    // Every mesh in the group shares the panel's UV layout, so the
-    // inner shell and rim take the same material and stay in register
-    // with the outer shell's print.
-    group.forEach((m) => { m.material = mat; });
-    if (name === "sleeve_r" || name === "sleeve_l") sleeveMeshes.push(...group);
+      const group = byNode.get(panel.node);
+      if (!group || !group.length) {
+        console.warn("no meshes found under node", panel.node, "for panel", name);
+        return;
+      }
+      const mat = makePanelMaterial(name, panel);
+      // Every mesh in the group shares the panel's UV layout, so the
+      // inner shell and rim take the same material and stay in register
+      // with the outer shell's print.
+      group.forEach((m) => { m.material = mat; });
     });
 
     const frontGroup = byNode.get(PANELS.front.node) || [];
@@ -284,16 +325,6 @@ export const createScene = async function () {
     camera.radius = radius;
     camera.lowerRadiusLimit = radius * 0.5;
     camera.upperRadiusLimit = radius * 2;
-
-    // keyLightBack's diffuse contribution overlaps keyLight's on the
-    // sleeves' curved (cylindrical) surface — their normals sweep
-    // through a band that faces both lights favorably at once, and
-    // the summed diffuse energy clips to a hard white "shiny" streak
-    // there (confirmed via screenshot; reducing keyLightBack's
-    // intensity alone wasn't enough to fix it). The flat torso panels
-    // don't have this problem, so only the sleeves are excluded —
-    // they're still lit by keyLight + fillLight, just not double-lit.
-    sleeveMeshes.forEach((m) => keyLightBack.excludedMeshes.push(m));
   } catch (err) {
     console.error("Failed to load tshirt.glb:", err);
   }
