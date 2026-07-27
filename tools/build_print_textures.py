@@ -28,7 +28,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+import seams
 import vectorart
+from glb import Glb
 
 # ------------------------------------------------------------------ convention
 # A panel texture is authored as "the panel seen from OUTSIDE, laid flat" --
@@ -193,6 +195,72 @@ PANELS = {
 
 SS = 3  # supersample factor; PIL polygons have no antialiasing of their own
 
+# ------------------------------------------------------------------- stitching
+# Style measured off the PSD's own "Stitches Shirt" layer: solid #515253, dashed,
+# about 0.8mm wide with a 3mm dash and 1.5mm gap. That is ordinary topstitch
+# spacing, so it is used as-is rather than invented. The layer is opaque, but it
+# composites subtly in the mockup, so it is drawn here at partial alpha.
+STITCH_RGB = (81, 82, 83)
+STITCH_ALPHA = 140  # of 255
+STITCH_WIDTH_MM = 0.8
+STITCH_DASH_MM = 3.0
+STITCH_GAP_MM = 1.5
+
+# How far in from the cut edge the stitch sits. A seam is topstitched close to
+# the edge; a hem or cuff is folded under first and stitched above the fold, so
+# it sits much further in. Panels are keyed by how deep their bottom edge folds.
+SEAM_INSET_MM = 6.0
+HEM_INSET_MM = 20.0
+HEM_BAND_MM = 45.0  # how far up from the bottom edge the hem rule ramps in
+
+
+# Which panel owns which seam. Every seam joins two pieces and both their island
+# boundaries run along it, so without this the armhole gets stitched twice and
+# the neckline three times (front panel plus both collar bands).
+#
+#   body panels  own the neckline, shoulders, armholes, sides and their own hem
+#   sleeves      own only their cuff -- the armhole is already drawn by the body
+#   collars      own nothing; the body panel's neckline stitch is that seam
+STITCH_ZONE = {
+    "front": "all",
+    "back": "all",
+    "sleeve_r": "hem_only",
+    "sleeve_l": "hem_only",
+    "collar_a": None,
+    "collar_b": None,
+}
+SLEEVE_HEM_BAND_MM = 70.0  # how far up from the cuff still counts as its hem
+
+
+def stitch_where(panel, height_mm):
+    """Predicate over boundary points: is this stretch of seam stitched here?"""
+    zone = STITCH_ZONE.get(panel, "all")
+    if zone is None:
+        return lambda u, v: False
+    if zone == "hem_only":
+        return lambda u, v: (height_mm - v) < SLEEVE_HEM_BAND_MM
+    return None
+
+
+def inset_for(panel, height_mm):
+    """Return inset_fn(u, v) -> millimetres, deeper near a folded hem.
+
+    Ramped rather than switched, so a single continuous boundary loop does not
+    jump between two offsets where the hem meets the side seam.
+    """
+    hem_panels = {"front", "back", "sleeve_r", "sleeve_l"}
+    if panel not in hem_panels:
+        return lambda u, v: SEAM_INSET_MM
+
+    def fn(u, v):
+        d = height_mm - v  # distance up from the bottom edge
+        if d >= HEM_BAND_MM:
+            return SEAM_INSET_MM
+        t = max(0.0, min(1.0, 1.0 - d / HEM_BAND_MM))
+        return SEAM_INSET_MM + (HEM_INSET_MM - SEAM_INSET_MM) * t
+
+    return fn
+
 
 def fit_transform(art_bbox, panel_w, panel_h):
     """Affine mapping artwork mm -> pattern mm, fitting one bbox onto the panel.
@@ -290,6 +358,11 @@ def main():
     panels = json.loads((PATTERN / "panels.json").read_text())["panels"]
     art = vectorart.load()
 
+    # Seams are read off the mesh itself -- an island boundary is a real cut
+    # line on this model, because the UVs are the actual sewing pattern.
+    glb = Glb(ROOT / "assets" / "tshirt.glb")
+    meshes = {m["node"]: m for m in glb.meshes()}
+
     for name, spec in PANELS.items():
         pm = panels[name]["pattern_mm"]
         w_mm, h_mm = pm["width"], pm["height"]
@@ -334,10 +407,38 @@ def main():
                 paste_stencil(img, op["stencil"], op["colour"], box, ppmss, op.get("rotate", 0.0))
                 d = ImageDraw.Draw(img)
 
+        # Stitching goes on last so it sits over the print, the way real
+        # topstitching runs across whatever the panel is printed with.
+        mesh = meshes.get(panels[name]["outer_node"])
+        runs = []
+        if mesh is not None:
+            overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            od = ImageDraw.Draw(overlay)
+            width_px = max(1, int(round(STITCH_WIDTH_MM * ppmss)))
+            runs = seams.seam_polylines(
+                mesh,
+                pm,
+                inset_for(name, h_mm),
+                STITCH_DASH_MM,
+                STITCH_GAP_MM,
+                where_fn=stitch_where(name, h_mm),
+            )
+            for run in runs:
+                od.line(
+                    [(x * ppmss, y * ppmss) for x, y in run],
+                    fill=STITCH_RGB + (STITCH_ALPHA,),
+                    width=width_px,
+                    joint="curve",
+                )
+            img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+
         img = img.resize((w, h), Image.LANCZOS)
         path = OUT / f"print-{name}.png"
         img.save(path)
-        print(f"{name:9s} {w:5d} x {h:5d} px  ({ppm} px/mm)  {w_mm:.1f} x {h_mm:.1f} mm  -> {path.name}")
+        print(
+            f"{name:9s} {w:5d} x {h:5d} px  ({ppm} px/mm)  {w_mm:.1f} x {h_mm:.1f} mm  "
+            f"stitch-dashes={len(runs):5d}  -> {path.name}"
+        )
 
 
 if __name__ == "__main__":
