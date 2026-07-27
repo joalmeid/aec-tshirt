@@ -196,17 +196,22 @@
         // u/X sign and the camera all interact, and argument is unreliable
         // there. Regenerate these numbers with tools/extract_pattern.py if the
         // model is ever replaced.
+        // Texture paths are relative to ASSET_ROOT so everything below stays
+        // character-identical to playground.js, which mirrors this scene and
+        // only differs by loading from raw.githubusercontent.com instead.
+        const ASSET_ROOT = "assets/";
+
         const PANELS = {
           front: {
             node: "Body_Front_Node_4",
-            texture: "assets/textures/print-front.png",
+            texture: "textures/print-front.png",
             // pattern piece 511.63 x 703.22 mm
             uScale: -0.00195454, uOffset: 0.49999156,
             vScale: 0.00142203, vOffset: 0.57734550,
           },
           back: {
             node: "Body_Back_Node_5",
-            texture: "assets/textures/print-back.png",
+            texture: "textures/print-back.png",
             // pattern piece 511.54 x 729.04 mm
             uScale: -0.00195488, uOffset: 0.50000785,
             vScale: 0.00137167, vOffset: 0.52828288,
@@ -216,28 +221,28 @@
           // scene renders on the VIEWER'S LEFT — it is the striped sleeve.
           sleeve_r: {
             node: "Sleeves_Node_6",
-            texture: "assets/textures/print-sleeve_r.png",
+            texture: "textures/print-sleeve_r.png",
             // pattern piece 397.13 x 204.03 mm
             uScale: -0.00251807, uOffset: 0.50000008,
             vScale: 0.00490134, vOffset: 0.49992072,
           },
           sleeve_l: {
             node: "Sleeves_Node_7",
-            texture: "assets/textures/print-sleeve_l.png",
+            texture: "textures/print-sleeve_l.png",
             // pattern piece 397.13 x 204.03 mm — carries the SCARPA badge
             uScale: -0.00251807, uOffset: 0.49999992,
             vScale: 0.00490134, vOffset: 0.49992072,
           },
           collar_a: {
             node: "Ribbing_Node_2",
-            texture: "assets/textures/print-collar_a.png",
+            texture: "textures/print-collar_a.png",
             // pattern piece 187.30 x 17.00 mm
             uScale: -0.00533901, uOffset: 0.50000000,
             vScale: 0.05882353, vOffset: 0.50000000,
           },
           collar_b: {
             node: "Ribbing_Node_3",
-            texture: "assets/textures/print-collar_b.png",
+            texture: "textures/print-collar_b.png",
             // pattern piece 272.32 x 17.00 mm
             uScale: -0.00367209, uOffset: 0.50000000,
             vScale: 0.05882353, vOffset: 0.50000000,
@@ -252,7 +257,7 @@
           // invertY:true, which flips the upload and would render every print
           // upside down on UVs that came out of a .glb. The 4th argument is
           // invertY; the 3rd is noMipmap, left false so mip-mapping stays on.
-          const tex = new BABYLON.Texture(panel.texture, scene, false, false);
+          const tex = new BABYLON.Texture(ASSET_ROOT + panel.texture, scene, false, false);
           tex.uScale = panel.uScale;
           tex.uOffset = panel.uOffset;
           tex.vScale = panel.vScale;
@@ -271,7 +276,7 @@
         }
 
         try {
-          const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "tshirt.glb", scene);
+          const result = await BABYLON.SceneLoader.ImportMeshAsync("", ASSET_ROOT, "tshirt.glb", scene);
 
           console.log(
             "Loaded meshes:",
