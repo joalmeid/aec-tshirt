@@ -35,7 +35,7 @@ from PIL import Image
 from glb import Glb
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERN = ROOT / "source" / "pattern"
+PATTERN = ROOT / "design" / "pattern"
 TEXDIR = ROOT / "assets" / "textures"
 
 def outer_node_map(panels):
@@ -62,7 +62,10 @@ VIEWS = {
     "left": (1.0, 0.0, 0.0),
     "right": (-1.0, 0.0, 0.0),
     "three-quarter": (0.62, 0.10, 0.78),
-    # Approximates source/reference-3d-mockup.png: mostly front-on with a slight
+    # Down onto the shoulders, tilted forward. Not straight down: a camera
+    # directly overhead has its forward parallel to up and the basis degenerates.
+    "top": (0.05, 1.0, 0.42),
+    # Approximates design/reference-3d-mockup.png: mostly front-on with a slight
     # turn, shot on a long lens so the silhouette stays close to orthographic.
     "reference": (0.30, 0.05, 0.95),
 }
@@ -222,7 +225,7 @@ def main():
             dst[better] = np.clip(rgb[better], 0, 1)
             sub[better] = z[better]
 
-    out = args.out or str(ROOT / "source" / "preview" / f"{args.textures}-{args.view}.png")
+    out = args.out or str(ROOT / "design" / "preview" / f"{args.textures}-{args.view}.png")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray((colour * 255).astype(np.uint8)).save(out)
     print(f"wrote {out}   view={args.view} flip_v={args.flip_v} mirror_u={args.mirror_u}")

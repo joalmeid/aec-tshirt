@@ -64,13 +64,13 @@ from glb import Glb
 # Sleeves_Node_6 (wearer's left) and x~300 on Node_7 (wearer's right).
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERN = ROOT / "source" / "pattern"
+PATTERN = ROOT / "design" / "pattern"
 OUT = ROOT / "assets" / "textures"
 
 BODY_WHITE = (252, 252, 252)
 
 # ---------------------------------------------------------------- design spec
-# Artwork-space landmarks, straight out of source/artwork/official-artwork.json.
+# Artwork-space landmarks, straight out of design/artwork/official-artwork.json.
 ART_FRONT_TORSO = (34.9, 45.0, 113.2, 155.4)  # path 0, the front body silhouette
 ART_BACK_TORSO = (151.4, 44.2, 229.7, 155.4)  # path 69, the back body silhouette
 
@@ -85,7 +85,7 @@ BODY_STRIPES_BACK = list(range(57, 63)) + list(range(70, 76))
 # into. The association mark sits on the chest and can therefore ride the same
 # torso fit as everything else; SCARPA sits on a sleeve and has to be placed in
 # sleeve-pattern millimetres instead.
-STENCILS = ROOT / "source" / "artwork" / "pdf-images"
+STENCILS = ROOT / "design" / "artwork" / "pdf-images"
 MARK_STENCIL = STENCILS / "img25_371x305.png"
 SCARPA_STENCIL = STENCILS / "img44_8214x984.png"
 INK = (34, 34, 33)  # #222221, the artwork's own black
@@ -219,27 +219,63 @@ STITCH_GAP_MM = 1.5
 # direction is horizontal, so those lines swung ~14mm sideways and read as a
 # spurious rising diagonal; and one continuous curve made the stitch turn every
 # corner, where an angle-bisector offset overshoots or self-intersects.
+# 5mm is this design's double spacing throughout: it is the hem's double-needle
+# row gap, and it is what the neckline produces across the shoulder seam, since
+# front and back each topstitch their own side of it at 2.5mm.
+#
+# A seam joining two panels therefore shows a pair of rows 2 x inset apart. That
+# is worth keeping in mind when reading the numbers below -- the shoulder sat at
+# 6mm, which looks unremarkable in isolation but rendered as a 12mm gap, twice
+# as wide as everything else on the garment and visibly wrong next to the tight
+# pair the neckline makes a few centimetres away.
+DOUBLE_GAP_MM = 5.0
+
 SEAM_SPEC = {
-    "neck": dict(inset=2.5, rows=1),
-    "shoulder": dict(inset=6.0, rows=1),
-    "armhole": dict(inset=6.0, rows=1),
-    "side": dict(inset=6.0, rows=1),
+    "neck": dict(inset=DOUBLE_GAP_MM / 2, rows=1),
+    "shoulder": dict(inset=DOUBLE_GAP_MM / 2, rows=1),
+    # Matched to the shoulder so the two MEET at the shoulder tip. They end at
+    # the same boundary point, so any difference in inset shows up there as a
+    # perpendicular step -- at 6mm against the shoulder's 2.5mm that was a 3.5mm
+    # displacement, reading as a broken corner rather than a join.
+    #
+    # The knock-on is at the other end, where the armhole now meets the side
+    # seam 3.5mm off instead of flush. That is accepted: it puts the junction a
+    # little higher up the side, which is where a real armhole ends anyway.
+    "armhole": dict(inset=DOUBLE_GAP_MM / 2, rows=1),
+    # Matched to the armhole for the same reason the armhole was matched to the
+    # shoulder: they end on a shared boundary point at the armpit, so unequal
+    # insets show up there as a perpendicular step rather than a join.
+    "side": dict(inset=DOUBLE_GAP_MM / 2, rows=1),
     # The only double-needle seam, measured off the PSD: two rows 5mm apart.
-    "hem": dict(inset=20.0, rows=2, row_gap=5.0),
+    # close_ring for the same reason as the cuff: the body's hem is a continuous
+    # loop once the side seams are sewn, so both rows are carried out to the
+    # panel's side edges. Without it the front and back hems stop short of each
+    # other, and the side seam's stitch comes down past a hem line that is not
+    # there to meet it.
+    "hem": dict(inset=20.0, rows=2, row_gap=DOUBLE_GAP_MM, close_ring=True),
     # Trimmed harder than the rest: a sleeve's bottom corners are rounded, so
     # the cuff run curves up into the underarm over its last ~15mm and offsetting
     # that leaves a hook. Two hooks meeting once the tube is sewn read as a cross
     # under the cuff.
-    "cuff": dict(inset=20.0, rows=1, trim=16.0),
+    "cuff": dict(inset=20.0, rows=1, trim=16.0, close_ring=True),
     # A sleeve's armhole is already drawn by the body panel it is sewn to, and
     # the underarm is an enclosed seam with no topstitching.
     "sleeve_armhole": None,
     "underarm": None,
 }
 
-# Every seam stops this far short of its corners, the way a real seam is not
-# sewn into the next one.
-STITCH_TRIM_MM = 5.0
+# Default: runs are NOT trimmed, so a seam reaches the seam it meets.
+#
+# Trimming exists for one case -- a run whose own last points curve into a
+# rounded corner, where offsetting faithfully follows that curve and leaves a
+# hook. That is the cuff, which overrides this below.
+#
+# Applying it everywhere was a mistake worth remembering. Trim is taken off BOTH
+# runs at a junction, so 5mm each became a 10mm gap; on the 107mm shoulder seam
+# that removed 20mm and left it visibly floating, connected to neither the
+# neckline nor the armhole. Runs already end square thanks to the one-sided
+# normals in seams.offset_run, so there is nothing here for a trim to fix.
+STITCH_TRIM_MM = 0.0
 
 NEAR_COLLAR_MM = 12.0
 NEAR_PIECE_MM = 8.0
@@ -310,7 +346,13 @@ def panel_stitches(panel, mesh, pattern_mm, neighbours):
     loop_uv = mesh["uv"][loop] - origin
     labels = classify_boundary(panel, mesh["pos"][loop], loop_uv, pattern_mm["height"], neighbours)
     return seams.stitch_runs(
-        loop_uv, labels, SEAM_SPEC, STITCH_DASH_MM, STITCH_GAP_MM, trim_mm=STITCH_TRIM_MM
+        loop_uv,
+        labels,
+        SEAM_SPEC,
+        STITCH_DASH_MM,
+        STITCH_GAP_MM,
+        trim_mm=STITCH_TRIM_MM,
+        span=(0.0, pattern_mm["width"]),
     )
 
 

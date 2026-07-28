@@ -27,7 +27,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERN = ROOT / "source" / "pattern"
+PATTERN = ROOT / "design" / "pattern"
 OUT = ROOT / "assets" / "textures"
 
 PX_PER_MM = 2.0

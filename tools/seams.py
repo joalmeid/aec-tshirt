@@ -7,7 +7,7 @@ edge of each island is exactly the cut line the panel was sewn along. Finding it
 needs no image processing and no tracing -- a boundary edge is simply an edge
 used by exactly one triangle.
 
-This is why the stitching does not come from the PSD. source/all-psd-exports/
+This is why the stitching does not come from the PSD. design/all-psd-exports/
 "Stitches Shirt.png" is 3000x3000 with 0.1% coverage, drawn in the mockup's
 fixed camera projection: perspective-warped onto one viewpoint, with no way back
 to the garment. The mesh already knows where its own seams are.
@@ -229,11 +229,57 @@ def trim_ends(pts, mm):
     return p[keep] if keep.sum() >= 2 else p
 
 
+def extend_to_span(pts, x_min, x_max, sample=6):
+    """Extrapolate an open run's ends until they reach x_min and x_max.
+
+    For a piece that is sewn into a tube, the pattern's left and right edges are
+    the SAME line on the finished garment. A hem run that stops short of them
+    leaves a gap at the join -- on this sleeve, 40mm where the boundary curves up
+    at the corners and is no longer classified as hem, plus the trim, came to 72mm
+    of a 397mm ring.
+
+    Extrapolating straight is not a shortcut, it is more correct than following
+    the boundary: the corner curvature is seam-allowance shaping, while the
+    finished hem is a closed circle parallel to the fold.
+
+    Direction is averaged over `sample` points so a single noisy end segment
+    cannot send the extension off at an angle.
+    """
+    p = np.asarray(pts, dtype=float)
+    if len(p) < 2:
+        return p
+
+    def endpoint(tip, inward):
+        d = tip - inward
+        n = np.linalg.norm(d)
+        if n < 1e-9 or abs(d[0]) < 1e-9:
+            return None
+        d = d / n
+        target = x_min if d[0] < 0 else x_max
+        t = (target - tip[0]) / d[0]
+        return tip + d * t if t > 0 else None
+
+    k = min(sample, len(p) - 1)
+    head = endpoint(p[0], p[k])
+    tail = endpoint(p[-1], p[-1 - k])
+
+    out = p
+    if head is not None:
+        out = np.vstack([head, out])
+    if tail is not None:
+        out = np.vstack([out, tail])
+    return out
+
+
 def label_runs(labels):
     """Contiguous same-label stretches of a CLOSED loop, as index arrays.
 
     A run that wraps past index 0 is stitched back together, so a seam crossing
     the loop's arbitrary start point stays one run rather than two stubs.
+
+    Runs do NOT overlap here. Whether a run should reach into its neighbour is a
+    question about the two seams' insets, which only stitch_runs knows -- see
+    `_join_to_next` there.
     """
     n = len(labels)
     if n == 0:
@@ -244,12 +290,74 @@ def label_runs(labels):
     runs = []
     for k, start in enumerate(bounds):
         end = bounds[(k + 1) % len(bounds)]
-        idx = np.arange(start, end if end > start else end + n) % n
-        runs.append((labels[start], idx))
+        stop = end if end > start else end + n
+        runs.append((labels[start], np.arange(start, stop) % n))
     return runs
 
 
-def stitch_runs(loop_uv, labels, spec, dash_mm=3.0, gap_mm=1.5, trim_mm=0.0):
+def trim_kinks(pts, max_turn_deg=30.0, head=True, tail=True):
+    """Drop points from either end while the polyline turns sharply there.
+
+    A run is classified from the boundary, and a classifier working on distance
+    to the neighbouring piece cannot land exactly on a corner: the first point or
+    two that have already turned along the NEXT edge still come out labelled with
+    this seam. Offsetting them faithfully reproduces the turn, so the stitch
+    finishes with a little flick across the corner instead of running out
+    straight -- which is what the side seams were doing as they reached the hem,
+    their last segment turning 90 degrees.
+
+    Self-orienting on purpose: it removes a kink wherever it is and leaves an end
+    that is already straight alone, so a run whose other end meets its neighbour
+    exactly does not get shortened for the sake of the far end. Smooth curves
+    such as the armhole and neckline turn a few degrees per segment and are
+    untouched.
+
+    `head` and `tail` let the caller protect an end that takes part in a join.
+    Those ends turn a corner legitimately -- that is what meeting the next seam
+    looks like -- and trimming them reopens the junction. Left on, this quietly
+    undid every join around the armhole.
+    """
+    p = np.asarray(pts, dtype=float)
+    while len(p) > 3:
+        d = np.diff(p, axis=0)
+        n = np.linalg.norm(d, axis=1, keepdims=True)
+        if np.any(n < 1e-9):
+            break
+        ang = np.degrees(np.arctan2(*(d / n).T[::-1]))
+        turn = np.abs((np.diff(ang) + 180.0) % 360.0 - 180.0)
+        if tail and turn[-1] > max_turn_deg:
+            p = p[:-1]
+        elif head and turn[0] > max_turn_deg:
+            p = p[1:]
+        else:
+            break
+    return p
+
+
+def _join_to_next(runs, k, spec):
+    """Should run `k` extend one point into the next run, to close the join?
+
+    Yes when both seams are stitched at the SAME inset: their offset lines then
+    land on top of each other and the shared segment completes the join. Without
+    this a run ends on its last boundary point while the next begins on the
+    following one, leaving the segment between them unstitched -- and since this
+    boundary is sampled at roughly 4.9mm, that read as a visible break at every
+    junction, most obviously where the shoulder meets the neckline.
+
+    No when the insets differ. The two lines are parallel but separated then, so
+    they never meet whatever we do, and reaching across only drags one segment of
+    the neighbour's direction into this run's end. Where the seams are also
+    perpendicular -- the side seam arriving at the hem -- that segment turns 90
+    degrees and hooks the line into a corner just before it terminates.
+    """
+    a = spec.get(runs[k][0])
+    b = spec.get(runs[(k + 1) % len(runs)][0])
+    if not a or not b:
+        return False
+    return abs(a["inset"] - b["inset"]) < 1e-6
+
+
+def stitch_runs(loop_uv, labels, spec, dash_mm=3.0, gap_mm=1.5, trim_mm=0.0, span=None):
     """Dashes for one boundary loop, one run per seam.
 
     `spec` maps a label to {"inset": mm, "rows": n, "row_gap": mm}, or to None
@@ -262,10 +370,11 @@ def stitch_runs(loop_uv, labels, spec, dash_mm=3.0, gap_mm=1.5, trim_mm=0.0):
     at those corners, and so does this.
     """
     sign = inward_sign(loop_uv)
-    whole = len(label_runs(labels)) == 1
+    runs = label_runs(labels)
+    whole = len(runs) == 1
 
     out = []
-    for label, idx in label_runs(labels):
+    for k, (label, idx) in enumerate(runs):
         rule = spec.get(label)
         if not rule or len(idx) < 4:
             continue
@@ -278,6 +387,21 @@ def stitch_runs(loop_uv, labels, spec, dash_mm=3.0, gap_mm=1.5, trim_mm=0.0):
                     continue
                 out.extend(dashes(offset, dash_mm, gap_mm, closed=True))
             else:
-                run = trim_ends(loop_uv[idx], rule.get("trim", trim_mm))
-                out.extend(dashes(offset_run(run, inset, sign), dash_mm, gap_mm, closed=False))
+                # Order matters. trim_kinks first, on the run's OWN points, to
+                # drop any stray point the classifier left across a corner. The
+                # join point is added AFTER: it sits across a corner by
+                # definition, so trimming kinks afterwards would remove exactly
+                # the point that closes the join and silently undo it.
+                joins_next = _join_to_next(runs, k, spec)
+                joined_from_prev = _join_to_next(runs, (k - 1) % len(runs), spec)
+                run = trim_kinks(loop_uv[idx], head=not joined_from_prev, tail=not joins_next)
+                if joins_next:
+                    run = np.vstack([run, loop_uv[runs[(k + 1) % len(runs)][1][0]]])
+                run = trim_ends(run, rule.get("trim", trim_mm))
+                run = offset_run(run, inset, sign)
+                if rule.get("close_ring") and span is not None:
+                    # The piece is sewn into a tube, so carry the run out to both
+                    # pattern edges -- they are the same line once joined.
+                    run = extend_to_span(run, span[0], span[1])
+                out.extend(dashes(run, dash_mm, gap_mm, closed=False))
     return out
