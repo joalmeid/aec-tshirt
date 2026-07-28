@@ -104,6 +104,11 @@ once in a way that cost real time. Confirm anything load-bearing in a browser.
 so their prose may differ but their behaviour may not. **Run it after touching
 either file.**
 
+The artwork PDF is an *input*, and one that arrives from outside. What it has
+to satisfy to be usable — and how to check a delivery before accepting it — is
+[reusable-pipeline.md](reusable-pipeline.md) §2, with a sendable brief in
+[artwork-brief-pt.md](artwork-brief-pt.md).
+
 ## What lives where
 
 | path | what |

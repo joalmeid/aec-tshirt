@@ -61,7 +61,139 @@ the rendering. A model that fails (1) needs re-unwrapping before it is usable.
 
 ---
 
-## 2. A layout manifest — *proposed*
+## 2. The contract the print artwork must satisfy
+
+The artwork arrives from an external designer, so this has to be specified *up
+front*, in the brief — not discovered after delivery. Re-requesting a corrected
+file costs a round trip through someone who does not know or care what a UV
+island is, and some of these failures are silent: the file opens fine in
+Illustrator and looks perfect on screen.
+
+There is a ready-to-send version of this in **[artwork-brief-pt.md](artwork-brief-pt.md)**,
+in Portuguese, matching how the rest of this event's supplier communication is
+done. This section is the reasoning behind it.
+
+### Why a vector PDF specifically
+
+Not a preference. `tools/pdf_to_svg.py` reads the PDF's **content stream** and
+recovers each drawing operation as real geometry — bezier paths with their fill
+colours and bounding boxes. That is what makes the artwork *measurable*: the
+stripe angle of 10.44°, the 3.70 mm pitch and the exact palette were read out of
+the file, not eyeballed off a picture. A raster PDF, a PNG, or a PDF that is just
+a wrapper around a flattened image gives none of that.
+
+The tool is deliberately dependency-free and implements only the PDF operator
+subset this artwork uses. The requirements below are, almost one for one, that
+subset — which is why they are worth stating precisely rather than as "send
+vectors please".
+
+### Hard requirements — the pipeline cannot proceed without these
+
+**1. Real vector paths.** Path construction (`m l c v y h re`) and painting
+(`f f* S B ...`) are what the parser understands. A flattened or
+image-only PDF yields zero paths.
+*Check:* `official-artwork.json` should hold on the order of a hundred paths.
+This artwork has 121.
+
+**2. All text converted to outlines.** No text operators are implemented at all —
+`BT`/`Tj`/`TJ` are not in the interpreter. **Live text is invisible to the
+extractor**: it will not appear in the SVG, the JSON or the render, and nothing
+will report an error. This is the single most likely silent failure. It is also
+ordinary print practice, so designers will not find it a strange thing to ask.
+
+**3. Flat colour fills only — no gradients, no transparency, no blend modes.**
+Supported colour operators are `rg RG g G k K sc scn SC SCN`, all of which set
+one flat colour. Gradients are drawn with shading (`sh`) or pattern colour
+spaces, which are not handled, so a gradient-filled shape comes out either the
+wrong colour or the previous one. Flat colour is what screen printing and DTG
+actually produce anyway.
+
+**4. No clipping masks.** `W`/`W*` are parsed and then deliberately ignored —
+clipping is not applied. Anything the designer hid behind a clipping mask
+**reappears** in the extraction. This is the failure that looks like file
+corruption: stray shapes, artwork bleeding across the page. Ask for masks to be
+expanded or deleted before delivery.
+
+**5. Dashed strokes expanded to filled paths.** The dash-pattern operator (`d`)
+is not implemented, so a dashed stroke extracts as a solid line. Line caps and
+joins are not modelled either. Solid strokes of constant width are read correctly
+(with `w`), so this only matters for dashed or decorative strokes — but
+"expand all strokes" is a simpler instruction to give than the exception.
+
+**6. Drawn as a technical flat, at flat-pattern proportions.** The garment seen
+head-on, laid flat, in real-world millimetres — **not** a mockup warped onto a
+body, not a photograph, not a 3/4 view. This is the property that made
+registration here a scale and a translate, and it is the requirement most likely
+to be misunderstood, because a designer's instinct is to deliver something that
+*looks* like the finished shirt. (That instinct produced this event's PSD, which
+is why the PSD is unusable — see [decisions.md](decisions.md) §2.)
+
+**7. Full bleed at every panel edge.** Artwork that runs to a seam must be drawn
+*past* it, by a couple of centimetres. Do not trim or clip artwork to the garment
+silhouette. The mesh's UV island does the clipping at geometry precision, so a
+pre-trimmed file can only be worse — see [decisions.md](decisions.md) §3. Note
+this compounds with (4): trimming *by clipping mask* both violates this and
+reappears anyway.
+
+**8. Raster elements only where unavoidable, and then at high resolution.** Logos
+supplied by third parties are often raster and that is accepted. They must be
+8-bit gray, RGB or CMYK — more exotic encodings are skipped rather than guessed
+at. Ask for **≥300 dpi at final printed size** (≈12 px/mm), which is 4× the
+densest texture baked here (3 px/mm on the front). This event's SCARPA lockup
+arrived at 8214 × 984 for a 105 mm placement, which is far more than needed and
+exactly the right problem to have.
+
+### Requirements that make registration cheap rather than possible
+
+These are not blocking, but each one removes guesswork:
+
+- **State the size the flat is drawn to**, and one real dimension to check it
+  against — half-chest laid flat is the natural one. This model is a size L: the
+  front pattern piece is 511.63 mm across, so a flat drawn to it should measure
+  about that from side seam to side seam. Without a stated scale, the
+  artwork→pattern fit is inferred from the silhouette and cannot be verified.
+- **One page, both flats**, front and back side by side, plus any sleeve or
+  pocket art laid out separately and labelled.
+- **Group and name each design element** — stripes, wordmark, sponsor lockups.
+  The extraction reports paths by index, and the per-event work is saying which
+  index ranges are which element. Named groups turn that from archaeology into
+  reading.
+- **Give the palette as values**, hex or CMYK, in the delivery note. The pipeline
+  can sample it, but a stated palette is checkable and survives a re-export.
+- **Keep the original editable file** (`.ai`, `.svg`) available. Not needed by
+  the pipeline, but it is what a correction is made from.
+
+### Accepting a delivery
+
+Run the extractor before telling the designer the file is good:
+
+```
+python3 tools/pdf_to_svg.py
+```
+
+Then check, in order — each maps to a requirement above:
+
+| check | reading | fails |
+|---|---|---|
+| path count in `official-artwork.json` | ~100+ | (1) not vector |
+| page size, reported in mm | plausible garment size | scale unstated |
+| open `official-artwork.png` | all lettering present | (2) live text |
+| …and compare to the designer's own preview | nothing extra, nothing missing | (4) clipping masks |
+| distinct fill colours | a handful of flat values | (3) gradients |
+| `pdf-images/` | only the logos you expect | art rasterised |
+| artwork extends past the silhouette | yes | (7) trimmed to shape |
+
+The last check is the scale-agreement test, and it is the one worth doing before
+committing to a layout: fit the torso silhouette's bounding box to the front
+panel and compare the x and y scale factors. They agreed to 2.6% on the front and
+0.35% on the back here, which is what confirmed the flat was drawn at pattern
+proportions. **If they disagree badly, that is the real work of the event** — the
+artwork is projected rather than flat, and needs redrawing or warping before any
+of this applies.
+
+---
+
+## 3. A layout manifest — *proposed*
 
 Lift the design spec out of Python into data. Today it is module constants in
 `build_print_textures.py`: `ART_FRONT_TORSO`, `BODY_STRIPES_FRONT`,
@@ -116,7 +248,7 @@ Design notes that matter more than the syntax:
 
 ---
 
-## 3. A panel-name contract
+## 4. A panel-name contract
 
 Layouts should be portable across garments where the design allows. That needs
 shared panel names mapping to per-garment nodes:
@@ -146,7 +278,7 @@ extracting it is the actual first step.
 
 ---
 
-## 4. What the runtime needs
+## 5. What the runtime needs
 
 The scene's `PANELS` table already carries exactly one garment's node names and
 transforms, generated from `panels.json`. That table **is** the seam along which
@@ -165,17 +297,15 @@ For a store, also consider:
 
 ---
 
-## 5. Adding a new event today
+## 6. Adding a new event today
 
 Without any of the above built, the honest current procedure:
 
-1. Get the print artwork as **vector PDF**. Run `pdf_to_svg.py` and read the path
-   report to find which indices are which design element.
-2. Check whether the technical flat is drawn at flat-pattern proportions — fit
-   the torso silhouette bbox to the panel and see whether the x and y scales
-   agree. They did here to within 3%, which made registration a scale and a
-   translate. **If they disagree badly, that is the real work**, and the
-   place to spend effort.
+1. Get the print artwork as **vector PDF**, briefed and accepted against §2.
+   Run `pdf_to_svg.py` and read the path report to find which indices are which
+   design element.
+2. Run the scale-agreement test from §2. It made registration a scale and a
+   translate here; if it fails, that is the real work of the event.
 3. Edit the design spec in `build_print_textures.py`.
 4. Rebuild, render, compare against the reference, confirm in a browser.
 
@@ -183,7 +313,7 @@ Steps 1, 2 and 4 generalise. Step 3 is what the manifest is for.
 
 ---
 
-## 6. Suggested order of work
+## 7. Suggested order of work
 
 1. **Extract `PANEL_GROUPS` into a model file.** Smallest change, removes the
    most duplication, and is a precondition for everything else.

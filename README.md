@@ -54,8 +54,11 @@ content, fetched over HTTP by the Playground, so its path is part of a public UR
 | [decisions.md](docs/decisions.md) | why it is built this way — including what was got wrong first |
 | [tools.md](docs/tools.md) | each tool: the need it answers and how to run it |
 | [reusable-pipeline.md](docs/reusable-pipeline.md) | generalising to many layouts, many garments, a store |
+| [artwork-brief-pt.md](docs/artwork-brief-pt.md) | the artwork requirements, written to send to a designer (PT) |
 
 New here? Read `decisions.md` §1 first — it is the idea the rest depends on.
+Commissioning artwork for a new event? Send `artwork-brief-pt.md`; the reasoning
+behind it is `reusable-pipeline.md` §2.
 
 ## Regenerating
 
