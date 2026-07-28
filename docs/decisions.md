@@ -291,3 +291,26 @@ a whole commit.
 They used to be compared byte for byte. Since the playground was slimmed for
 pasting, `tools/check_scene_sync.py` compares **code only**, with comments
 stripped. Run it after touching either file.
+
+## 13. The PSD was stripped from the history
+
+The 91.5 MB layered PSD (`t-shirt-AEC26-final.psd`) was committed early, before
+it was understood that it is a 2D mockup and not a usable source — see §2. It
+then travelled through two renames (`source/` → `design/`, plus a stint in
+`assets/`) and GitHub warned on every push that carried it.
+
+It was removed from all refs with `git-filter-repo`, stripping all three of its
+historical paths, and force-pushed. The commit that only added it was pruned as
+empty; nothing else changed, verified by diffing the rewritten tree against a
+bundle of the pre-rewrite history. Clone size went from ~120 MB to ~31 MB.
+
+`*.psd` is git-ignored so it cannot return. Keep the file next to the repo if you
+want it; the per-layer PNG exports in `design/all-psd-exports/` are what the
+investigation actually read, and they are still tracked.
+
+**GitHub still has the old objects.** A force-push makes commits unreachable, not
+deleted: `refs/pull/1/head` is immutable and pins the pre-rewrite tip, and old
+commit SHAs still resolve — the blob is downloadable by anyone who knows the old
+SHA. Only GitHub Support can garbage-collect them. That is fine here, since the
+file is a t-shirt mockup and the repo is public anyway. It would **not** be fine
+for a leaked secret, which must be rotated rather than rewritten away.
