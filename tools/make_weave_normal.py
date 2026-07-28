@@ -122,7 +122,7 @@ def main():
     Image.fromarray(rgb, "RGB").save(path, optimize=True)
 
     tiled = np.tile(rgb, (2, 2, 1))
-    Image.fromarray(tiled, "RGB").save(OUT.parent.parent / "design" / "preview" / "knit-normal-tiled.png")
+    Image.fromarray(tiled, "RGB").save(OUT.parent.parent / "pipeline-design" / "preview" / "knit-normal-tiled.png")
 
     slope = np.degrees(np.arctan(np.abs(np.gradient(h * HEIGHT_MM, TILE_MM / SIZE)[0])).max())
     print(f"{path.name}: {SIZE}x{SIZE} for a {TILE_MM:.0f}mm patch, {path.stat().st_size/1024:.0f}KB")

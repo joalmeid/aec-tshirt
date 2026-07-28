@@ -9,7 +9,7 @@ UV space directly usable as a print-layout coordinate system: a point at
 physical panel, and the panel's own UV island boundary is the neckline /
 armhole / shoulder / hem.
 
-Outputs to design/pattern/:
+Outputs to pipeline-design/pattern/:
   panels.json          per-panel mm extents + the Babylon uScale/uOffset needed
                        to map those mm UVs into 0..1 texture space
   <panel>-mask.png     island coverage at PX_PER_MM, for eyeballing placement
@@ -27,7 +27,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 GLB = ROOT / "assets" / "tshirt.glb"
-OUT = ROOT / "design" / "pattern"
+OUT = ROOT / "pipeline-design" / "pattern"
 
 PX_PER_MM = 4  # only for the human-facing guide images, not the final textures
 

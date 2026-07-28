@@ -35,7 +35,7 @@ from PIL import Image
 from glb import Glb
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERN = ROOT / "design" / "pattern"
+PATTERN = ROOT / "pipeline-design" / "pattern"
 TEXDIR = ROOT / "assets" / "textures"
 
 def outer_node_map(panels):
@@ -225,7 +225,7 @@ def main():
             dst[better] = np.clip(rgb[better], 0, 1)
             sub[better] = z[better]
 
-    out = args.out or str(ROOT / "design" / "preview" / f"{args.textures}-{args.view}.png")
+    out = args.out or str(ROOT / "pipeline-design" / "preview" / f"{args.textures}-{args.view}.png")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray((colour * 255).astype(np.uint8)).save(out)
     print(f"wrote {out}   view={args.view} flip_v={args.flip_v} mirror_u={args.mirror_u}")

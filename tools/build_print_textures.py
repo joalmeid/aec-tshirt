@@ -64,13 +64,13 @@ from glb import Glb
 # Sleeves_Node_6 (wearer's left) and x~300 on Node_7 (wearer's right).
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERN = ROOT / "design" / "pattern"
+PATTERN = ROOT / "pipeline-design" / "pattern"
 OUT = ROOT / "assets" / "textures"
 
 BODY_WHITE = (252, 252, 252)
 
 # ---------------------------------------------------------------- design spec
-# Artwork-space landmarks, straight out of design/artwork/official-artwork.json.
+# Artwork-space landmarks, straight out of pipeline-design/artwork/official-artwork.json.
 ART_FRONT_TORSO = (34.9, 45.0, 113.2, 155.4)  # path 0, the front body silhouette
 ART_BACK_TORSO = (151.4, 44.2, 229.7, 155.4)  # path 69, the back body silhouette
 
@@ -85,7 +85,7 @@ BODY_STRIPES_BACK = list(range(57, 63)) + list(range(70, 76))
 # into. The association mark sits on the chest and can therefore ride the same
 # torso fit as everything else; SCARPA sits on a sleeve and has to be placed in
 # sleeve-pattern millimetres instead.
-STENCILS = ROOT / "design" / "artwork" / "pdf-images"
+STENCILS = ROOT / "pipeline-design" / "artwork" / "pdf-images"
 MARK_STENCIL = STENCILS / "img25_371x305.png"
 SCARPA_STENCIL = STENCILS / "img44_8214x984.png"
 INK = (34, 34, 33)  # #222221, the artwork's own black

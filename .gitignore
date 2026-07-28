@@ -2,7 +2,7 @@
 # land while reporting a visual problem -- reference renders, "here is the
 # glitch" crops. They are conversation, not artefacts, and there are already a
 # dozen of them. Anchored with a leading slash so images that ARE artefacts,
-# under assets/ docs/ and design/, are untouched.
+# under assets/ docs/ and pipeline-design/, are untouched.
 /*.png
 /*.jpg
 /*.jpeg
@@ -14,18 +14,18 @@
 
 # Diagnostic renders from tools/preview_render.py. Regenerate on demand; they
 # are a debugging aid, not an input to anything.
-design/preview/
+pipeline-design/preview/
 
 # The PDF embeds a 3MB copy of the PSD mockup preview alongside the artwork.
 # tools/pdf_to_svg.py extracts every image it finds, but nothing consumes this
 # one -- only the two logo stencils (img25, img44) are used.
-design/artwork/pdf-images/img26_3000x3000.png
+pipeline-design/artwork/pdf-images/img26_3000x3000.png
 
 # The layered PSD mockup. 91.5MB, and nothing in the pipeline reads it -- the
 # artwork comes from the print-ready PDF, and the investigation used the per-layer
-# exports in design/all-psd-exports/. It was committed once and stripped back out
-# of the history; this rule stops it returning. Keep the file locally if you need
-# it. See docs/decisions.md sections 2 and 13.
+# exports in pipeline-design/all-psd-exports/. It was committed once and stripped
+# back out of the history; this rule stops it returning. Keep the file locally if
+# you need it. See docs/decisions.md sections 2 and 13.
 *.psd
 
 # Python bytecode from the tools/

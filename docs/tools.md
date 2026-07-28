@@ -16,7 +16,7 @@ glTF node each panel actually is, which the project has got wrong repeatedly.
 
 **Does.** Reads `assets/tshirt.glb`, and per panel writes the millimetre extents,
 the Babylon `uScale/uOffset/vScale/vOffset`, texel-density statistics and the
-u↔world-axis correlations to `design/pattern/panels.json`, plus mask and
+u↔world-axis correlations to `pipeline-design/pattern/panels.json`, plus mask and
 millimetre-grid guide images.
 
 The texel-density ratio is the interesting output: near 1.0 means the unwrap is a

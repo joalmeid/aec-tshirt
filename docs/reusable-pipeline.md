@@ -75,7 +75,7 @@ A manifest turns "edit the builder" into "add a layout":
 # layouts/aec-2026.yaml   (proposed)
 name: Alimenta Esta Corrida 2026
 garment: unisex-tee            # -> models/unisex-tee.yaml
-artwork: design/artwork/official-artwork.svg
+artwork: pipeline-design/artwork/official-artwork.svg
 
 palette:
   stripe_light: "#c0d174"

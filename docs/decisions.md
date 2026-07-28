@@ -54,11 +54,11 @@ resolution changes that.
 The PSD is **not in this repo** and is git-ignored. It is 91.5 MB, nothing in the
 pipeline reads it, and it was carried in the history until it was stripped out —
 see §13. Keep it alongside the repo if you need it; its per-layer PNG exports in
-`design/all-psd-exports/` are what the investigation actually used.
+`pipeline-design/all-psd-exports/` are what the investigation actually read.
 
-`design/T-shirt Alimenta esta corrida oficial 2026.pdf` is the file the garment
-supplier works from: a single 750 × 1230.17 pt page — 264.6 ×
-434.0 mm — holding front and back technical flats as **121 real vector paths**.
+`pipeline-design/T-shirt Alimenta esta corrida oficial 2026.pdf` is the file the
+garment supplier works from: a single 750 × 1230.17 pt page — 264.6 × 434.0 mm —
+holding front and back technical flats as **121 real vector paths**.
 From it, measured rather than guessed:
 
 - palette `#c0d174` · `#98a64f` · `#6e7a33` · `#222221`
@@ -112,7 +112,8 @@ flipping, and a negative `uScale` was hand-written into the scene to correct a
 mirror that never existed. The same sign error is why the backface-cull test had
 to be flipped to see the front panel at all — one root cause, two symptoms.
 
-`design/pattern/panels.json` had the correct positive values the whole time.
+`pipeline-design/pattern/panels.json` had the correct positive values the whole
+time.
 
 **If the print ever looks mirrored again, suspect the preview tool before these
 numbers.**
@@ -296,8 +297,8 @@ stripped. Run it after touching either file.
 
 The 91.5 MB layered PSD (`t-shirt-AEC26-final.psd`) was committed early, before
 it was understood that it is a 2D mockup and not a usable source — see §2. It
-then travelled through two renames (`source/` → `design/`, plus a stint in
-`assets/`) and GitHub warned on every push that carried it.
+then travelled through renames (`source/` → `design/` → `pipeline-design/`, plus
+a stint in `assets/`) and GitHub warned on every push that carried it.
 
 It was removed from all refs with `git-filter-repo`, stripping all three of its
 historical paths, and force-pushed. The commit that only added it was pruned as
@@ -307,7 +308,7 @@ to 30.6 MiB — the PSD costs far less than its 91.5 MB on disk because it packs
 down, which is why the saving is roughly half rather than three quarters.
 
 `*.psd` is git-ignored so it cannot return. Keep the file next to the repo if you
-want it; the per-layer PNG exports in `design/all-psd-exports/` are what the
+want it; the per-layer PNG exports in `pipeline-design/all-psd-exports/` are what the
 investigation actually read, and they are still tracked.
 
 **GitHub still has the old objects.** A force-push makes commits unreachable, not

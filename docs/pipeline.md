@@ -5,10 +5,10 @@ renders. It is entirely offline: the browser loads finished PNGs and a `.glb`,
 and does no generation of its own.
 
 ```
-  assets/tshirt.glb ──────────► extract_pattern.py ──► design/pattern/panels.json
+  assets/tshirt.glb ──────────► extract_pattern.py ──► pipeline-design/pattern/panels.json
    (garment model)                                     + mask/guide images
                                                               │
-  T-shirt ...oficial 2026.pdf ─► pdf_to_svg.py ──► design/artwork/
+  T-shirt ...oficial 2026.pdf ─► pdf_to_svg.py ──► pipeline-design/artwork/
    (print artwork, vector)                          official-artwork.svg + .json
                                                     pdf-images/*.png (logo stencils)
                                                               │
@@ -30,7 +30,7 @@ and does no generation of its own.
 
 ### 1. Extract the pattern — `extract_pattern.py`
 
-Reads the `.glb` and writes `design/pattern/panels.json`: each panel's millimetre
+Reads the `.glb` and writes `pipeline-design/pattern/panels.json`: each panel's millimetre
 extents, the `uScale/uOffset/vScale/vOffset` Babylon needs to map those onto
 0..1, the texel-density statistics, and the u↔world-axis correlations.
 
@@ -111,7 +111,7 @@ either file.**
 | `src/` | the Babylon scene — page, Playground twin, dev server |
 | `assets/` | everything fetched at runtime: model, textures, environment |
 | `tools/` | the offline pipeline |
-| `design/` | inputs and intermediates: PSD exports, converted artwork, pattern data, preview renders |
+| `pipeline-design/` | the pipeline's design inputs and intermediates: supplier artwork PDF, converted artwork, pattern data, PSD exports, preview renders |
 | `docs/` | this |
 
 `assets/` deliberately sits at the repo root rather than under `src/`. It is

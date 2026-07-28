@@ -38,7 +38,8 @@ None of it needs hand-tuned fudge factors, because none of it is a projection.
 src/       the Babylon scene — page, Playground twin, dev server
 assets/    everything fetched at runtime: model, textures, environment
 tools/     the offline pipeline (Python, numpy + Pillow only)
-design/    inputs and intermediates: PSD exports, artwork, pattern data, previews
+pipeline-design/   the pipeline's design inputs and intermediates:
+                   artwork, pattern data, PSD exports, preview renders
 docs/      how and why
 ```
 

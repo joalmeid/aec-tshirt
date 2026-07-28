@@ -3,8 +3,8 @@ import index from "./index.html";
 
 // Matches Babylon's own convention (see doc.babylonjs.com/guidedLearning/usingVite,
 // which uses a "public/" folder the same way): only the runtime-fetched asset
-// folder is served, not the whole project root — so design/ (PSDs, reference
-// images) and .git stay unreachable even locally.
+// folder is served, not the whole project root — so pipeline-design/ (PSDs,
+// reference images) and .git stay unreachable even locally.
 const assetsRoot = join(import.meta.dir, "..", "assets");
 
 const server = Bun.serve({

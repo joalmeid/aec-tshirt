@@ -7,7 +7,7 @@ edge of each island is exactly the cut line the panel was sewn along. Finding it
 needs no image processing and no tracing -- a boundary edge is simply an edge
 used by exactly one triangle.
 
-This is why the stitching does not come from the PSD. design/all-psd-exports/
+This is why the stitching does not come from the PSD. pipeline-design/all-psd-exports/
 "Stitches Shirt.png" is 3000x3000 with 0.1% coverage, drawn in the mockup's
 fixed camera projection: perspective-warped onto one viewpoint, with no way back
 to the garment. The mesh already knows where its own seams are.

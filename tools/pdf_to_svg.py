@@ -5,7 +5,7 @@
 garment supplier works from: a single 750 x 1230.17 pt page holding front and
 back technical flats, drawn as real vector paths (beziers, not a raster). That
 makes it the authoritative source for the design's exact colours, stripe angles
-and stripe widths -- everything in design/all-psd-exports/ is a composited
+and stripe widths -- everything in pipeline-design/all-psd-exports/ is a composited
 mockup layer that has already been perspective-warped onto one fixed camera and
 is therefore useless for measurement.
 
@@ -18,7 +18,7 @@ Deliberately dependency-free: no poppler / cairo / resvg on this machine, so it
 parses the content stream directly. Only the subset of PDF operators this file
 actually uses is implemented.
 
-Outputs to design/artwork/:
+Outputs to pipeline-design/artwork/:
   official-artwork.svg    the vector artwork, y-flipped into SVG convention
   official-artwork.json   every path with its fill/stroke colour and bbox,
                           plus each raster image's placement rectangle
@@ -39,8 +39,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
-PDF = ROOT / "design" / "T-shirt Alimenta esta corrida oficial 2026.pdf"
-OUT = ROOT / "design" / "artwork"
+PDF = ROOT / "pipeline-design" / "T-shirt Alimenta esta corrida oficial 2026.pdf"
+OUT = ROOT / "pipeline-design" / "artwork"
 
 PT_TO_MM = 25.4 / 72.0
 

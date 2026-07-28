@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
-ART = ROOT / "design" / "artwork"
+ART = ROOT / "pipeline-design" / "artwork"
 
 PT_TO_MM = 25.4 / 72.0
 
