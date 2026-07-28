@@ -302,7 +302,9 @@ then travelled through two renames (`source/` → `design/`, plus a stint in
 It was removed from all refs with `git-filter-repo`, stripping all three of its
 historical paths, and force-pushed. The commit that only added it was pruned as
 empty; nothing else changed, verified by diffing the rewritten tree against a
-bundle of the pre-rewrite history. Clone size went from ~120 MB to ~31 MB.
+bundle of the pre-rewrite history. A fully-packed mirror clone went from 63.7 MiB
+to 30.6 MiB — the PSD costs far less than its 91.5 MB on disk because it packs
+down, which is why the saving is roughly half rather than three quarters.
 
 `*.psd` is git-ignored so it cannot return. Keep the file next to the repo if you
 want it; the per-layer PNG exports in `design/all-psd-exports/` are what the
