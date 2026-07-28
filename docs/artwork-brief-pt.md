@@ -14,8 +14,8 @@ são extraídos diretamente do PDF, não copiados à mão.
 
 Por isso há alguns requisitos que saem do habitual. Nada aqui é difícil de
 cumprir, mas **quase todos falham em silêncio**: o ficheiro abre bem no
-Illustrator, parece perfeito no ecrã, e só damos pelo problema no fim. Daí o
-detalhe.
+Illustrator ou no Inkscape, parece perfeito no ecrã, e só damos pelo problema
+no fim. Daí o detalhe.
 
 ---
 
@@ -25,6 +25,13 @@ detalhe.
 costas lado a lado, mais a arte das mangas (ou outras peças) à parte e
 identificada.
 
+**E, se for fácil, o mesmo ficheiro exportado também em SVG.** É um clique a mais
+na exportação e para nós é o formato mais fiável — mas o PDF é que é obrigatório.
+
+> Não é preciso software pago. O **Inkscape** é gratuito, é open-source e faz tudo
+> o que está aqui pedido (o SVG é o formato nativo dele). Ao longo do documento
+> indicamos os menus do Illustrator e do Inkscape.
+
 ---
 
 ## Requisitos obrigatórios
@@ -32,9 +39,11 @@ identificada.
 **1. Vetorial a sério.** Traçados vetoriais, não uma imagem exportada dentro de
 um PDF. Não achatar («flatten») nem rasterizar na exportação.
 
-**2. Todo o texto convertido em curvas.** *Type → Create Outlines.* Texto vivo é
-**invisível** para o nosso processo — não dá erro, simplesmente desaparece do
-resultado. É o erro mais provável de todos.
+**2. Todo o texto convertido em curvas.** Texto vivo é **invisível** para o nosso
+processo — não dá erro, simplesmente desaparece do resultado. É o erro mais
+provável de todos.
+> Illustrator: *Type → Create Outlines* · Inkscape: *Caminho → Objecto para
+> Caminho* (`Ctrl+Shift+C`)
 
 **3. Cores sólidas, sem gradientes, transparências ou modos de fusão.** Cada
 forma com uma cor chapada. Gradientes e transparências saem com a cor errada.
@@ -44,9 +53,12 @@ forma com uma cor chapada. Gradientes e transparências saem com a cor errada.
 antes de entregar. O que estiver escondido por uma máscara **volta a aparecer**
 no nosso processo — o resultado parece um ficheiro corrompido, com formas soltas
 espalhadas pela página.
+> Illustrator: *Object → Clipping Mask → Release* · Inkscape: *Objecto → Recorte
+> → Libertar*
 
-**5. Contornos expandidos.** *Object → Path → Outline Stroke.* Linhas tracejadas
-sem expandir saem contínuas.
+**5. Contornos expandidos.** Linhas tracejadas sem expandir saem contínuas.
+> Illustrator: *Object → Path → Outline Stroke* · Inkscape: *Caminho → Contorno
+> para Caminho* (`Ctrl+Alt+C`)
 
 **6. Desenho técnico plano, à escala real, em milímetros.** A peça vista de
 frente, esticada e pousada — **não** uma simulação vestida, nem uma foto, nem uma
@@ -93,6 +105,7 @@ escala de cinzentos, RGB ou CMYK.
 - [ ] Desenho técnico plano, escala real em mm
 - [ ] Sangria de ~2 cm em todos os bordos
 - [ ] Logótipos vetoriais, ou ≥300 dpi no tamanho final
+- [ ] SVG exportado também, se possível
 - [ ] Tamanho de referência e uma medida real indicados
 - [ ] Paleta indicada em HEX ou CMYK
 - [ ] Ficheiro editável guardado

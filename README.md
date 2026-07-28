@@ -55,6 +55,7 @@ content, fetched over HTTP by the Playground, so its path is part of a public UR
 | [tools.md](docs/tools.md) | each tool: the need it answers and how to run it |
 | [reusable-pipeline.md](docs/reusable-pipeline.md) | generalising to many layouts, many garments, a store |
 | [artwork-brief-pt.md](docs/artwork-brief-pt.md) | the artwork requirements, written to send to a designer (PT) |
+| [ideal-reusable-pipeline.md](docs/ideal-reusable-pipeline.md) | what we would build knowing what we know now — source format, per-panel artwork, many garments |
 
 New here? Read `decisions.md` §1 first — it is the idea the rest depends on.
 Commissioning artwork for a new event? Send `artwork-brief-pt.md`; the reasoning

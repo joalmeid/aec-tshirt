@@ -7,6 +7,10 @@ each available in several designs.
 This is a **design guide**, not a description of code that exists. Where it
 proposes a format, it says so.
 
+It generalises **what exists**. For the separate question of what would be built
+from scratch — a better source format, per-panel artwork, one contract across
+garments — see [ideal-reusable-pipeline.md](ideal-reusable-pipeline.md).
+
 ---
 
 ## The property everything rests on
