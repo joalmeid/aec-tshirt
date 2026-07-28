@@ -9,11 +9,18 @@ lighting.
 ## Run it
 
 ```bash
-bun run dev     # http://localhost:3000
+bun run dev     # http://localhost:3000       the development scene
+                # http://localhost:3000/prod  the baked, shippable model
 ```
 
 No build step. Babylon loads from its CDN; the page and its assets are served
 straight from disk.
+
+`/` builds the six panel materials in JavaScript, which is the right shape for
+working on the design. `/prod` loads `assets/tshirt-prod.glb` — the same shirt
+with the UV mapping, textures and materials baked into the model — and contains
+no material code at all. See
+[production-delivery.md](docs/production-delivery.md).
 
 There is also `src/playground.js` — the same scene shaped for
 [playground.babylonjs.com](https://playground.babylonjs.com). Select all, paste,
@@ -53,6 +60,7 @@ content, fetched over HTTP by the Playground, so its path is part of a public UR
 | [pipeline.md](docs/pipeline.md) | how a model plus artwork becomes what you see, stage by stage |
 | [decisions.md](docs/decisions.md) | why it is built this way — including what was got wrong first |
 | [tools.md](docs/tools.md) | each tool: the need it answers and how to run it |
+| [production-delivery.md](docs/production-delivery.md) | shipping it: what gets baked into the model, what cannot be, and how to verify |
 | [reusable-pipeline.md](docs/reusable-pipeline.md) | generalising to many layouts, many garments, a store |
 | [artwork-brief-pt.md](docs/artwork-brief-pt.md) | the artwork requirements, written to send to a designer (PT) |
 | [ideal-reusable-pipeline.md](docs/ideal-reusable-pipeline.md) | what we would build knowing what we know now — source format, per-panel artwork, many garments |
@@ -67,6 +75,7 @@ behind it is `reusable-pipeline.md` §2.
 python3 tools/build_print_textures.py   # the usual one, after a design change
 python3 tools/extract_pattern.py        # after a model change
 python3 tools/pdf_to_svg.py             # after an artwork change
+python3 tools/build_production_glb.py   # rebake the shippable model
 ```
 
 Then check it:

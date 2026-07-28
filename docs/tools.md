@@ -1,6 +1,6 @@
 # Tools
 
-Ten Python files in `tools/`. All are dependency-free beyond `numpy` and
+Eleven Python files in `tools/`. All are dependency-free beyond `numpy` and
 `Pillow` — deliberately, because this machine has no poppler, cairo, resvg,
 scipy, OpenCV or headless browser, and the pipeline should not need them.
 
@@ -58,6 +58,35 @@ event's design; everything else is garment-generic.
 
 ```bash
 python3 tools/build_print_textures.py
+```
+
+---
+
+## `build_production_glb.py` — bake the runtime into the model
+
+**Need.** `src/index.html` applies the UV mapping, textures and materials in
+JavaScript, so anything that loads `assets/tshirt.glb` without running that page
+— a partner's site, `<model-viewer>`, Blender, a supplier — gets an untextured
+shirt.
+
+**Does.** Writes `assets/tshirt-prod.glb`: `TEXCOORD_0` rewritten so the per-panel
+`uScale/uOffset` is already applied, `TEXCOORD_1` for the knit tiling, generated
+`TANGENT`, the seven PNGs embedded, two samplers, and six materials with
+`KHR_materials_sheen`. No extension is needed for the UV mapping itself — baking
+the attribute beats `KHR_texture_transform` for portability, and removes a
+convention this project has got wrong before.
+
+Panel geometry comes from `panels.json` and node names from
+`extract_pattern.py`'s `PANEL_GROUPS`, imported rather than copied, so the bake
+cannot drift from what was measured. It reads back what it wrote and fails if any
+panel's UVs left 0..1.
+
+Compression is deliberately *not* here — it needs external binaries. The command
+is printed at the end. See [production-delivery.md](production-delivery.md).
+
+```bash
+python3 tools/build_production_glb.py
+python3 tools/build_production_glb.py --textures calib   # the acceptance build
 ```
 
 ---

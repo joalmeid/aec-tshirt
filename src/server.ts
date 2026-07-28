@@ -1,5 +1,6 @@
 import { join, sep } from "node:path";
 import index from "./index.html";
+import indexProd from "./index-prod.html";
 
 // Matches Babylon's own convention (see doc.babylonjs.com/guidedLearning/usingVite,
 // which uses a "public/" folder the same way): only the runtime-fetched asset
@@ -10,6 +11,11 @@ const assetsRoot = join(import.meta.dir, "..", "assets");
 const server = Bun.serve({
   routes: {
     "/": index,
+    // The baked, self-contained build from tools/build_production_glb.py.
+    // Same scene configuration as "/", but no material code at all — see the
+    // comment at the top of index-prod.html. ?calib swaps in the
+    // millimetre-grid model, which is how the bake is verified.
+    "/prod": indexProd,
   },
 
   // Re-bundles on each request and enables the injected HMR websocket;

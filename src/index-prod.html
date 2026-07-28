@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <title>AEC 2026 — T-shirt 3D (produção)</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000; /* simulates the website's black background */
+      overflow: hidden;
+    }
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    #loading, #fallback {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-family: sans-serif;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    #fallback { display: none; }
+    /* Which build is on screen, and whether the bake held. Hidden by default —
+       this page stands in for a production embed, and a debug overlay burned
+       into it is exactly the kind of thing that ships by accident. It appears
+       only when it has something to say: a failed check, ?debug, or the calib
+       build, where knowing which of the two models is on screen matters. The
+       console log is unconditional either way. */
+    #badge {
+      display: none;
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      color: #7d8a5a;
+      font: 12px/1.5 ui-monospace, monospace;
+      white-space: pre;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="renderCanvas"></canvas>
+  <div id="loading">A carregar…</div>
+  <div id="fallback">O teu navegador não suporta WebGL, necessário para esta pré-visualização 3D.</div>
+  <div id="badge"></div>
+
+  <!--
+    THE POINT OF THIS PAGE.
+
+    src/index.html renders the shirt by loading a bare geometry .glb and then
+    building all six materials in JavaScript: a PANELS table of per-panel
+    uScale/uOffset, six texture loads, CLAMP vs WRAP, invertY=false,
+    gammaSpace=false, metallic/roughness/sheen. Roughly 130 lines that any
+    other site embedding the shirt would have to copy, keep in sync, and get
+    right.
+
+    This page loads assets/tshirt-prod.glb, built by
+    tools/build_production_glb.py, and does NONE of that. There is no panel
+    table here, no texture code and no material code: nothing below constructs
+    a material or a texture, and the only material properties it touches are
+    the ones it reads back to check the bake worked. Everything after the
+    loader is camera, environment and tone mapping — scene configuration that
+    glTF has nowhere to store and every viewer supplies for itself.
+
+    If the shirt renders correctly here, the model is genuinely self-contained
+    and can be handed to <babylon-viewer>, <model-viewer>, a partner's site or
+    the Khronos sandbox without any of this repo travelling with it.
+
+    URL switches:
+      /prod            the real print
+      /prod?calib      the millimetre-grid calibration build — this is the
+                       acceptance test for the bake. Every panel must read
+                       upright and unmirrored, with the grid at the right
+                       scale. See docs/production-delivery.md.
+      /prod?inspect    open the Babylon inspector (off by default here, unlike
+                       index.html, because this page is meant to be the
+                       production path rather than the working one)
+      /prod?debug      show the self-containment badge even when everything
+                       passes. It shows itself anyway if a check fails.
+  -->
+
+  <!--
+    CDN, as in index.html, because this page has no build step. Babylon's own
+    docs are explicit that this is NOT the production arrangement: "The CDN
+    should not be used in production environments." Serve @babylonjs/core and
+    @babylonjs/loaders from your own origin when this ships. That warning is
+    about these <script> tags — not about the .glb, which is the artefact this
+    page exists to prove out.
+  -->
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+  <script>
+    const canvas = document.getElementById("renderCanvas");
+    const loadingEl = document.getElementById("loading");
+    const fallbackEl = document.getElementById("fallback");
+    const badgeEl = document.getElementById("badge");
+
+    const params = new URLSearchParams(location.search);
+    const ASSET_ROOT = "assets/";
+    const MODEL = params.has("calib") ? "tshirt-prod-calib.glb" : "tshirt-prod.glb";
+
+    if (!BABYLON.Engine.isSupported()) {
+      canvas.style.display = "none";
+      loadingEl.style.display = "none";
+      fallbackEl.style.display = "block";
+    } else {
+      const engine = new BABYLON.Engine(canvas, true, {
+        preserveDrawingBuffer: true,
+        stencil: true,
+        alpha: true,
+      });
+
+      // --- 3D Commerce certification, half 1 of 2 -------------------------
+      //
+      // Babylon's certified configuration differs from the engine defaults in
+      // exactly two ways, and this is the first: transparency as coverage,
+      // which turns off "specular over alpha". That predates the glTF
+      // transmission and volume extensions and is not how a certified viewer
+      // renders. It is a no-op on this shirt, which has no transparency at
+      // all, but it belongs here — the setting is a property of the viewer,
+      // not of the model, so it has to be set by whoever embeds the .glb.
+      // The other half is the tone mapper, further down.
+      BABYLON.SceneLoader.OnPluginActivatedObservable.add((plugin) => {
+        if (plugin.name === "gltf") {
+          plugin.transparencyAsCoverage = true;
+        }
+      });
+
+      const createScene = async function () {
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent
+
+        const camera = new BABYLON.ArcRotateCamera(
+          "camera",
+          Math.PI / 2,    // alpha: face the shirt's front (Body_Front is the z>0 panel)
+          Math.PI / 2.3,  // beta: slightly above eye-level
+          6,              // radius: reset from the model bounds once it loads
+          BABYLON.Vector3.Zero(),
+          scene
+        );
+        camera.attachControl(canvas, true);
+        camera.wheelPrecision = 50;
+        camera.lowerBetaLimit = 0.3;
+        camera.upperBetaLimit = Math.PI - 0.3;
+        camera.minZ = 0.01; // default (1) clips nearby geometry at this model's small scale
+
+        // --- What glTF cannot carry -----------------------------------------
+        //
+        // Everything from here to the loader is the honest limit of "bake it
+        // into the model". A .glb has nowhere to put an environment or a tone
+        // curve, so these three blocks travel alongside the file rather than
+        // inside it, and any site embedding the shirt must set them too or it
+        // will not match. studio.env is 205KB and ships next to the .glb.
+        //
+        // Without an environment the shirt does not merely look flatter: the
+        // material's sheen lobe is a reflection of the surroundings, so with
+        // nothing to reflect the fabric stops reading as fabric.
+        scene.environmentTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(
+          ASSET_ROOT + "env/studio.env",
+          scene
+        );
+        scene.environmentIntensity = 1.0;
+
+        const keyLight = new BABYLON.DirectionalLight(
+          "keyLight",
+          new BABYLON.Vector3(-0.55, -1, 0.45),
+          scene
+        );
+        keyLight.position = new BABYLON.Vector3(4, 6, 4);
+        keyLight.intensity = 1.1;
+        keyLight.specular = new BABYLON.Color3(0, 0, 0); // shine comes from the material
+
+        // --- 3D Commerce certification, half 2 of 2 -------------------------
+        //
+        // KHR PBR Neutral is the certified tone mapper, chosen here for the
+        // same reason index.html chose it: it leaves in-gamut colour alone and
+        // only compresses highlights, so the brand greens stay on-brand where
+        // ACES would shift them filmically.
+        //
+        // exposure 1.15 is NOT part of the certification — it is this event's
+        // own grade, carried over from index.html so the two pages can be
+        // compared side by side. A partner site rendering the .glb at the
+        // default 1.0 will get a slightly darker shirt, which is a real
+        // consequence of exposure being viewer-side and worth knowing about
+        // before someone reports it as a bug.
+        const imageProcessing = scene.imageProcessingConfiguration;
+        imageProcessing.toneMappingEnabled = true;
+        imageProcessing.toneMappingType =
+          BABYLON.ImageProcessingConfiguration.TONEMAPPING_KHR_PBR_NEUTRAL;
+        imageProcessing.exposure = 1.15;
+
+        // Idle auto-rotate
+        let userInteracting = false;
+        canvas.addEventListener("pointerdown", () => { userInteracting = true; });
+        scene.onBeforeRenderObservable.add(() => {
+          if (!userInteracting) {
+            camera.alpha += 0.0015;
+          }
+        });
+
+        if (params.has("inspect")) {
+          scene.debugLayer.show({ embedMode: true });
+        }
+
+        try {
+          // The whole runtime. No material code follows.
+          const result = await BABYLON.SceneLoader.ImportMeshAsync("", ASSET_ROOT, MODEL, scene);
+
+          // --- Self-containment check ---------------------------------------
+          //
+          // A shirt that renders "nearly right" is the failure this guards
+          // against. If the bake silently lost a material, an extension or a
+          // UV set, the model still loads and still looks like a shirt — just
+          // untextured, or without the fabric lobe, or with the weave at the
+          // wrong scale. Asserting the contract in the console turns "looks a
+          // bit off" into a named cause.
+          const mats = scene.materials.filter((m) => m.albedoTexture);
+          const problems = [];
+          if (mats.length !== 6) {
+            problems.push(`expected 6 textured materials, found ${mats.length}`);
+          }
+          mats.forEach((m) => {
+            if (!m.bumpTexture) problems.push(`${m.name}: no normal map`);
+            if (!m.sheen || !m.sheen.isEnabled) problems.push(`${m.name}: KHR_materials_sheen did not load`);
+            if (m.bumpTexture && m.bumpTexture.coordinatesIndex !== 1) {
+              problems.push(`${m.name}: normal map is on UV set ${m.bumpTexture.coordinatesIndex}, expected 1`);
+            }
+            // Nothing should be transforming UVs any more — that is the whole
+            // point of the bake. A non-identity scale here means the model
+            // still needs runtime help.
+            const t = m.albedoTexture;
+            if (t.uScale !== 1 || t.vScale !== 1 || t.uOffset !== 0 || t.vOffset !== 0) {
+              problems.push(
+                `${m.name}: albedo still carries a UV transform ` +
+                  `(${t.uScale}, ${t.vScale}, ${t.uOffset}, ${t.vOffset}) — not fully baked`
+              );
+            }
+          });
+
+          const hasTangents = result.meshes.some(
+            (m) => m.isVerticesDataPresent && m.isVerticesDataPresent(BABYLON.VertexBuffer.TangentKind)
+          );
+
+          console.log(
+            `%c${MODEL}%c  ${mats.length} materials: ${mats.map((m) => m.name).join(", ")}\n` +
+              `tangents in file: ${hasTangents ? "yes" : "no (derived per-pixel)"}`,
+            "font-weight:bold",
+            ""
+          );
+          if (problems.length) {
+            console.error("NOT self-contained:\n  " + problems.join("\n  "));
+          } else {
+            console.log("%cself-contained: no runtime material code was needed", "color:#8a0");
+          }
+
+          if (problems.length || params.has("debug") || params.has("calib")) {
+            badgeEl.style.display = "block";
+            badgeEl.style.color = problems.length ? "#d06060" : "#7d8a5a";
+            badgeEl.textContent =
+              `${MODEL}\n${mats.length} materials · sheen ${mats.every((m) => m.sheen && m.sheen.isEnabled) ? "ok" : "MISSING"}` +
+              `\ntangents ${hasTangents ? "baked" : "derived"}` +
+              (problems.length ? `\n${problems.length} problem(s) — see console` : "");
+          }
+
+          // Frame the camera on the actual model, the one thing that genuinely
+          // has to be computed rather than configured.
+          //
+          // getWorldExtends() over the WHOLE scene, not one mesh's bounding
+          // box. index.html frames on the front panel, which it can do because
+          // it has a PANELS table naming the node; this page has no such table
+          // by design, and an earlier version here took "the first mesh with
+          // vertices" instead — which is Ribbing_Node_2, the collar. Its
+          // half-diagonal is 0.09 against the front panel's 0.41, so the camera
+          // opened at a quarter of the intended distance, buried in the
+          // neckline, with an upperRadiusLimit below index.html's *starting*
+          // radius. It could not be zoomed out of.
+          //
+          // 1.8x the half-diagonal reproduces index.html's framing (its
+          // 2.2 x front-panel half-diagonal = 0.899; this gives 0.906).
+          const { min, max } = scene.getWorldExtends();
+          const radius = max.subtract(min).length() * 0.5 * 1.8;
+          camera.setTarget(BABYLON.Vector3.Center(min, max));
+          camera.radius = radius;
+          camera.lowerRadiusLimit = radius * 0.5;
+          camera.upperRadiusLimit = radius * 2;
+
+          loadingEl.style.display = "none";
+        } catch (err) {
+          console.error(`Failed to load ${MODEL}:`, err);
+          loadingEl.textContent =
+            `Erro ao carregar ${MODEL}. Correr: python3 tools/build_production_glb.py`;
+        }
+
+        return scene;
+      };
+
+      createScene().then((scene) => {
+        engine.runRenderLoop(() => {
+          scene.render();
+        });
+      });
+
+      window.addEventListener("resize", () => {
+        engine.resize();
+      });
+    }
+  </script>
+</body>
+</html>
