@@ -39,8 +39,8 @@ article of clothing."*
 
 ## 2. Artwork comes from the print-ready PDF, not the PSD
 
-`design/t-shirt-AEC26-final.psd` looks like the obvious source and is a trap. It
-is a **2D mockup**, not a 3D model:
+`t-shirt-AEC26-final.psd` looks like the obvious source and is a trap. It is a
+**2D mockup**, not a 3D model:
 
 - `Parts Merged.png` is a flat colour-ID mask drawn in one fixed 3/4 camera view.
 - `Shirt Front Part FV11.png` is the artwork already perspective-warped for that
@@ -51,8 +51,13 @@ is a **2D mockup**, not a 3D model:
 None of it carries UV information, and no amount of re-exporting at higher
 resolution changes that.
 
-`T-shirt Alimenta esta corrida oficial 2026.pdf` (in the parent directory) is the
-file the garment supplier works from: a single 750 × 1230.17 pt page — 264.6 ×
+The PSD is **not in this repo** and is git-ignored. It is 91.5 MB, nothing in the
+pipeline reads it, and it was carried in the history until it was stripped out —
+see §13. Keep it alongside the repo if you need it; its per-layer PNG exports in
+`design/all-psd-exports/` are what the investigation actually used.
+
+`design/T-shirt Alimenta esta corrida oficial 2026.pdf` is the file the garment
+supplier works from: a single 750 × 1230.17 pt page — 264.6 ×
 434.0 mm — holding front and back technical flats as **121 real vector paths**.
 From it, measured rather than guessed:
 

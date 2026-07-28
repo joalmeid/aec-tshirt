@@ -65,7 +65,7 @@ VIEWS = {
     # Down onto the shoulders, tilted forward. Not straight down: a camera
     # directly overhead has its forward parallel to up and the basis degenerates.
     "top": (0.05, 1.0, 0.42),
-    # Approximates design/reference-3d-mockup.png: mostly front-on with a slight
+    # Approximates assets/reference-3d-mockup.png: mostly front-on with a slight
     # turn, shot on a long lens so the silhouette stays close to orthographic.
     "reference": (0.30, 0.05, 0.95),
 }

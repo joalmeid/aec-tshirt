@@ -1,4 +1,4 @@
-// https://playground.babylonjs.com/#TI5ATU
+// https://playground.babylonjs.com/#TI5ATU#4
 // Select all and paste into playground.babylonjs.com. Mirrors src/index.html's
 // createScene(); see docs/decisions.md for why anything here is the way it is.
 // ASSET_ROOT pins the "main" branch — assets must be pushed there to resolve.

@@ -64,10 +64,15 @@ Ferreira, Emanuel Rolim.
 
 ## Files in this directory
 
-- `Alimenta esta Corrida 2026 VF.pdf` — main event deck: org intro, history, 2026 goals,
-  impact stats, communication strategy, and the sponsor pitch.
-- `Carta de pedido Apoio às Empresas 2026 VF.docx` — sponsorship request letter template.
-- `tshirt-aec26.jpeg` — event t-shirt design.
+Event documents live in `assets/`:
+
+- `assets/Alimenta esta Corrida 2026 VF.pdf` — main event deck: org intro, history, 2026
+  goals, impact stats, communication strategy, and the sponsor pitch.
+- `assets/Carta de pedido Apoio às Empresas 2026 VF.docx` — sponsorship request letter
+  template.
+- `assets/tshirt-aec26.jpeg` — event t-shirt design.
+
+The rest of the repo is the 3D t-shirt viewer — see `README.md` and `docs/`.
 
 ## Working conventions
 

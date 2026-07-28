@@ -21,6 +21,13 @@ design/preview/
 # one -- only the two logo stencils (img25, img44) are used.
 design/artwork/pdf-images/img26_3000x3000.png
 
+# The layered PSD mockup. 91.5MB, and nothing in the pipeline reads it -- the
+# artwork comes from the print-ready PDF, and the investigation used the per-layer
+# exports in design/all-psd-exports/. It was committed once and stripped back out
+# of the history; this rule stops it returning. Keep the file locally if you need
+# it. See docs/decisions.md sections 2 and 13.
+*.psd
+
 # Python bytecode from the tools/
 __pycache__/
 *.pyc
