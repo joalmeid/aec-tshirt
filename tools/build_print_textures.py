@@ -72,13 +72,35 @@ BODY_WHITE = (252, 252, 252)
 # ---------------------------------------------------------------- design spec
 # Artwork-space landmarks, straight out of pipeline-design/artwork/official-artwork.json.
 ART_FRONT_TORSO = (34.9, 45.0, 113.2, 155.4)  # path 0, the front body silhouette
-ART_BACK_TORSO = (151.4, 44.2, 229.7, 155.4)  # path 69, the back body silhouette
+ART_BACK_TORSO = (151.4, 44.2, 229.7, 155.4)  # path 67, the back body silhouette
 
 # Which artwork paths belong to which design element.
-BODY_STRIPES_FRONT = list(range(1, 7)) + list(range(27, 33)) + [46, 47, 48]
-SHOULDER_STRIPES_FRONT = list(range(88, 97))
-LOCKUP = list(range(97, 121))
-BODY_STRIPES_BACK = list(range(57, 63)) + list(range(70, 76))
+#
+# These indices are the per-event work: the PDF has no names, only 120 anonymous
+# paths, so which index is which element has to be re-derived every time the
+# artwork changes. Derive them, do not shift them by hand -- select on fill
+# colour, bbox height and which half of the page the path sits in, then read the
+# result. The final-artwork revision deleted two paths near the start and
+# inserted one in the middle, so a uniform offset would have been wrong in both
+# directions at once.
+#
+# Groups below, as derived from official-artwork.json:
+#   front body   full-height (h>100mm) greens with x < 130mm
+#   back body    the same with x >= 130mm
+#   accent       front greens of middle height (30 < h <= 100mm)
+#   shoulder     front greens of h <= 30mm, up at the shoulder (y 45..63)
+#   lockup       the chest wordmark, ink + light-green letters, y 74..91
+BODY_STRIPES_FRONT = list(range(1, 5)) + list(range(25, 31)) + [44, 45, 46]
+SHOULDER_STRIPES_FRONT = list(range(87, 96))
+LOCKUP = list(range(96, 120))
+BODY_STRIPES_BACK = list(range(55, 61)) + list(range(68, 75))
+
+# NOT drawn, deliberately: the artwork's eight #383838 charcoal shapes. They are
+# the presentation flat's drop SHADOWS -- the side/underarm shading that makes
+# the mockup read as a photographed garment -- not printed panels. Confirmed
+# with the organisers. They have never been in the texture and must not be
+# added; the shirt is white with green stripes. Left recorded here because
+# "the artwork has eight paths we never draw" otherwise reads as an oversight.
 
 # The two logos are raster stencils inside the PDF (white = ink), recovered by
 # tools/pdf_to_svg.py along with the exact placement rectangle each one is drawn
@@ -90,7 +112,7 @@ MARK_STENCIL = STENCILS / "img25_371x305.png"
 SCARPA_STENCIL = STENCILS / "img44_8214x984.png"
 INK = (34, 34, 33)  # #222221, the artwork's own black
 
-ART_MARK_BOX = (71.25, 65.61, 76.56, 69.98)  # obj 25 placement, artwork mm
+ART_MARK_BOX = (71.96, 67.03, 77.26, 71.39)  # obj 25 placement, artwork mm
 
 # SCARPA's placement on the sleeve, as fractions of the sleeve pattern piece so
 # the intent survives a change of panel size.

@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 """Convert the official print artwork PDF into SVG + a geometry report.
 
-"T-shirt Alimenta esta corrida oficial 2026.pdf" is the print-ready artwork the
-garment supplier works from: a single 750 x 1230.17 pt page holding front and
-back technical flats, drawn as real vector paths (beziers, not a raster). That
-makes it the authoritative source for the design's exact colours, stripe angles
-and stripe widths -- everything in pipeline-design/all-psd-exports/ is a composited
+"t-shirt alimenta esta corrida final.pdf" is the print-ready artwork the garment
+supplier works from: a single 750 x 1139.15 pt page holding front and back
+technical flats, drawn as real vector paths (beziers, not a raster). That makes
+it the authoritative source for the design's exact colours, stripe angles and
+stripe widths -- everything in pipeline-design/all-psd-exports/ is a composited
 mockup layer that has already been perspective-warped onto one fixed camera and
 is therefore useless for measurement.
+
+It supersedes "T-shirt Alimenta esta corrida oficial 2026.pdf", which is kept
+alongside it for provenance. The two are the same design at the same scale and
+position -- the page was trimmed 91.02 pt at the bottom and the content bbox is
+unchanged -- so the artwork -> pattern registration carried over untouched. What
+did change: the front stripe group was de-duplicated (it used to be drawn twice,
+0.02 mm apart), one dark stripe was added to each of front and back, the shoulder
+accent grew ~13% and the wordmark shrank ~4.5%. Net effect is a darker-reading
+shirt with the same palette.
 
 Note this is the *technical flat*, i.e. the assembled garment seen head-on, not
 a flat pattern piece. Geometry read out of here still has to be re-expressed in
@@ -39,7 +48,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
-PDF = ROOT / "pipeline-design" / "T-shirt Alimenta esta corrida oficial 2026.pdf"
+PDF = ROOT / "pipeline-design" / "t-shirt alimenta esta corrida final.pdf"
 OUT = ROOT / "pipeline-design" / "artwork"
 
 PT_TO_MM = 25.4 / 72.0

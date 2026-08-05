@@ -1,46 +1,44 @@
 {
-  "source": "T-shirt Alimenta esta corrida oficial 2026.pdf",
+  "source": "t-shirt alimenta esta corrida final.pdf",
   "page_pt": [
     750.0,
-    1230.17
+    1139.15
   ],
   "page_mm": [
     264.58,
-    433.98
+    401.87
   ],
   "pt_to_mm": 0.35277777777777775,
   "operators": {
     "c": 662,
-    "l": 538,
-    "q": 154,
-    "Q": 154,
-    "m": 142,
-    "cm": 124,
-    "f": 76,
-    "h": 60,
-    "rg": 57,
+    "l": 532,
+    "q": 151,
+    "Q": 151,
+    "m": 141,
+    "cm": 123,
+    "f": 75,
+    "h": 59,
+    "rg": 54,
     "S": 45,
-    "gs": 39,
-    "W": 22,
-    "n": 22,
+    "gs": 38,
+    "W": 20,
+    "n": 20,
     "RG": 19,
     "j": 13,
     "J": 13,
-    "re": 11,
     "Do": 11,
+    "re": 9,
     "G": 8,
     "TL": 8,
     "v": 8,
     "y": 6,
-    "Tj": 3,
     "BDC": 2,
     "EMC": 2,
-    "Td": 2,
     "BT": 1,
     "Tf": 1,
     "Tc": 1,
     "Tm": 1,
-    "Tw": 1,
+    "Tj": 1,
     "ET": 1
   },
   "images": [
@@ -53,13 +51,13 @@
         -3.8714,
         6.3019,
         322.5638,
-        996.6296
+        905.6107
       ],
       "bbox_pt": [
         318.6923719,
-        194.9219587,
+        194.92081860000008,
         375.16897190000003,
-        233.5404036000001
+        233.53926350000006
       ],
       "bbox_mm": [
         112.43,
@@ -76,44 +74,44 @@
         0.0,
         0.0,
         12.3656,
-        201.9747,
-        1031.8109
+        203.9747,
+        936.792
       ],
       "bbox_pt": [
-        201.9747319,
-        185.99342610000008,
-        217.0162268,
-        198.35907550000002
+        203.9747328,
+        189.99233990000005,
+        219.0162277,
+        202.3579893000001
       ],
       "bbox_mm": [
-        71.25,
-        65.61,
-        76.56,
-        69.98
+        71.96,
+        67.03,
+        77.26,
+        71.39
       ]
     },
     {
       "name": "Im2",
       "obj": 26,
       "ctm": [
-        604.5283,
+        584.1509,
         0.0,
         0.0,
-        604.5283,
-        80.3435,
-        107.3208
+        584.1509,
+        82.9244,
+        40.7549
       ],
       "bbox_pt": [
-        80.3435001,
-        518.3209288,
-        684.8717931,
-        1122.8492218000001
+        82.9244312,
+        514.2442217,
+        667.0753565,
+        1098.3951470000002
       ],
       "bbox_mm": [
-        28.34,
-        182.85,
-        241.61,
-        396.12
+        29.25,
+        181.41,
+        235.33,
+        387.49
       ]
     }
   ],
@@ -143,15 +141,15 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        109.79,
+        111.79,
         143.72,
-        173.02,
+        175.02,
         452.82
       ],
       "bbox_mm": [
-        38.73,
+        39.44,
         50.7,
-        61.04,
+        61.74,
         159.75
       ],
       "points": 8
@@ -162,15 +160,15 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        99.62,
+        101.62,
         143.72,
-        162.85,
+        164.85,
         452.82
       ],
       "bbox_mm": [
-        35.14,
+        35.85,
         50.7,
-        57.45,
+        58.16,
         159.75
       ],
       "points": 8
@@ -181,78 +179,40 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        120.21,
+        122.21,
         143.72,
-        183.44,
+        185.44,
         452.82
       ],
       "bbox_mm": [
-        42.41,
+        43.11,
         50.7,
-        64.71,
+        65.42,
         159.75
       ],
       "points": 8
     },
     {
       "index": 4,
-      "fill": "#98a64f",
+      "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        109.73,
+        60.4,
         143.72,
-        172.96,
+        123.63,
         452.82
       ],
       "bbox_mm": [
-        38.71,
+        21.31,
         50.7,
-        61.02,
+        43.61,
         159.75
       ],
       "points": 8
     },
     {
       "index": 5,
-      "fill": "#c0d174",
-      "stroke": null,
-      "stroke_width_pt": 1.0,
-      "bbox_pt": [
-        99.56,
-        143.72,
-        162.79,
-        452.82
-      ],
-      "bbox_mm": [
-        35.12,
-        50.7,
-        57.43,
-        159.75
-      ],
-      "points": 8
-    },
-    {
-      "index": 6,
-      "fill": "#6e7a33",
-      "stroke": null,
-      "stroke_width_pt": 1.0,
-      "bbox_pt": [
-        120.15,
-        143.72,
-        183.38,
-        452.82
-      ],
-      "bbox_mm": [
-        42.39,
-        50.7,
-        64.69,
-        159.75
-      ],
-      "points": 8
-    },
-    {
-      "index": 7,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -271,7 +231,7 @@
       "points": 9
     },
     {
-      "index": 8,
+      "index": 6,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -290,7 +250,7 @@
       "points": 9
     },
     {
-      "index": 9,
+      "index": 7,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -298,7 +258,7 @@
         125.57,
         269.65,
         126.48,
-        351.5
+        351.49
       ],
       "bbox_mm": [
         44.3,
@@ -309,7 +269,7 @@
       "points": 9
     },
     {
-      "index": 10,
+      "index": 8,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -328,7 +288,7 @@
       "points": 9
     },
     {
-      "index": 11,
+      "index": 9,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -336,7 +296,7 @@
         257.12,
         140.21,
         301.11,
-        155.43
+        155.42
       ],
       "bbox_mm": [
         90.71,
@@ -347,7 +307,7 @@
       "points": 9
     },
     {
-      "index": 12,
+      "index": 10,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -366,7 +326,7 @@
       "points": 9
     },
     {
-      "index": 13,
+      "index": 11,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -385,7 +345,7 @@
       "points": 9
     },
     {
-      "index": 14,
+      "index": 12,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -393,7 +353,7 @@
         293.21,
         269.65,
         294.12,
-        351.5
+        351.49
       ],
       "bbox_mm": [
         103.44,
@@ -404,7 +364,7 @@
       "points": 9
     },
     {
-      "index": 15,
+      "index": 13,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -423,7 +383,7 @@
       "points": 9
     },
     {
-      "index": 16,
+      "index": 14,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -431,7 +391,7 @@
         118.57,
         140.21,
         162.57,
-        155.43
+        155.42
       ],
       "bbox_mm": [
         41.83,
@@ -442,15 +402,15 @@
       "points": 9
     },
     {
-      "index": 17,
+      "index": 15,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
       "bbox_pt": [
         163.22,
-        130.36,
+        130.35,
         256.13,
-        157.64
+        157.63
       ],
       "bbox_mm": [
         57.58,
@@ -461,7 +421,7 @@
       "points": 17
     },
     {
-      "index": 18,
+      "index": 16,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -480,7 +440,7 @@
       "points": 18
     },
     {
-      "index": 19,
+      "index": 17,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -499,13 +459,13 @@
       "points": 59
     },
     {
-      "index": 20,
+      "index": 18,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
         281.15,
-        204.59,
+        204.58,
         306.02,
         438.97
       ],
@@ -518,7 +478,7 @@
       "points": 65
     },
     {
-      "index": 21,
+      "index": 19,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -537,7 +497,7 @@
       "points": 197
     },
     {
-      "index": 22,
+      "index": 20,
       "fill": "#d5dcde",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -545,7 +505,7 @@
         172.25,
         130.05,
         247.44,
-        150.29
+        150.28
       ],
       "bbox_mm": [
         60.77,
@@ -556,7 +516,7 @@
       "points": 51
     },
     {
-      "index": 23,
+      "index": 21,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -564,7 +524,7 @@
         172.25,
         130.05,
         247.44,
-        150.29
+        150.28
       ],
       "bbox_mm": [
         60.77,
@@ -575,7 +535,7 @@
       "points": 52
     },
     {
-      "index": 24,
+      "index": 22,
       "fill": "#b3bfc2",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -594,7 +554,7 @@
       "points": 66
     },
     {
-      "index": 25,
+      "index": 23,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -613,7 +573,7 @@
       "points": 67
     },
     {
-      "index": 26,
+      "index": 24,
       "fill": "#ffffff",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -632,7 +592,7 @@
       "points": 59
     },
     {
-      "index": 27,
+      "index": 25,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -651,7 +611,7 @@
       "points": 8
     },
     {
-      "index": 28,
+      "index": 26,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -670,7 +630,7 @@
       "points": 8
     },
     {
-      "index": 29,
+      "index": 27,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -689,7 +649,7 @@
       "points": 8
     },
     {
-      "index": 30,
+      "index": 28,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -708,7 +668,7 @@
       "points": 8
     },
     {
-      "index": 31,
+      "index": 29,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -727,7 +687,7 @@
       "points": 8
     },
     {
-      "index": 32,
+      "index": 30,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -746,7 +706,7 @@
       "points": 8
     },
     {
-      "index": 33,
+      "index": 31,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -765,7 +725,7 @@
       "points": 9
     },
     {
-      "index": 34,
+      "index": 32,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -784,7 +744,7 @@
       "points": 9
     },
     {
-      "index": 35,
+      "index": 33,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -803,7 +763,7 @@
       "points": 9
     },
     {
-      "index": 36,
+      "index": 34,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -822,7 +782,7 @@
       "points": 9
     },
     {
-      "index": 37,
+      "index": 35,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -841,7 +801,7 @@
       "points": 42
     },
     {
-      "index": 38,
+      "index": 36,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -860,7 +820,7 @@
       "points": 60
     },
     {
-      "index": 39,
+      "index": 37,
       "fill": "#ffffff",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -879,7 +839,7 @@
       "points": 59
     },
     {
-      "index": 40,
+      "index": 38,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -898,7 +858,7 @@
       "points": 9
     },
     {
-      "index": 41,
+      "index": 39,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -917,7 +877,7 @@
       "points": 9
     },
     {
-      "index": 42,
+      "index": 40,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -936,7 +896,7 @@
       "points": 9
     },
     {
-      "index": 43,
+      "index": 41,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -955,7 +915,7 @@
       "points": 9
     },
     {
-      "index": 44,
+      "index": 42,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -974,7 +934,7 @@
       "points": 42
     },
     {
-      "index": 45,
+      "index": 43,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -993,64 +953,64 @@
       "points": 60
     },
     {
-      "index": 46,
+      "index": 44,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        115.13,
-        315.99,
-        137.89,
+        115.14,
+        299.89,
+        140.89,
         438.64
       ],
       "bbox_mm": [
         40.62,
-        111.47,
-        48.65,
+        105.79,
+        49.7,
         154.74
       ],
       "points": 5
     },
     {
-      "index": 47,
+      "index": 45,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        114.54,
-        367.62,
-        127.61,
+        114.83,
+        352.2,
+        130.62,
         437.93
       ],
       "bbox_mm": [
-        40.41,
-        129.69,
-        45.02,
+        40.51,
+        124.25,
+        46.08,
         154.49
       ],
       "points": 5
     },
     {
-      "index": 48,
+      "index": 46,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        115.26,
-        259.85,
-        148.43,
+        114.77,
+        247.31,
+        151.43,
         439.18
       ],
       "bbox_mm": [
-        40.66,
-        91.67,
-        52.36,
+        40.49,
+        87.24,
+        53.42,
         154.93
       ],
       "points": 5
     },
     {
-      "index": 49,
+      "index": 47,
       "fill": "#ffffff",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1069,7 +1029,7 @@
       "points": 59
     },
     {
-      "index": 50,
+      "index": 48,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1088,7 +1048,7 @@
       "points": 9
     },
     {
-      "index": 51,
+      "index": 49,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1107,26 +1067,26 @@
       "points": 9
     },
     {
-      "index": 52,
+      "index": 50,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
       "bbox_pt": [
         430.2,
-        176.59,
+        176.58,
         443.27,
         203.68
       ],
       "bbox_mm": [
         151.77,
-        62.3,
+        62.29,
         156.37,
         71.85
       ],
       "points": 9
     },
     {
-      "index": 53,
+      "index": 51,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -1145,7 +1105,7 @@
       "points": 9
     },
     {
-      "index": 54,
+      "index": 52,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1164,7 +1124,7 @@
       "points": 42
     },
     {
-      "index": 55,
+      "index": 53,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -1183,7 +1143,7 @@
       "points": 60
     },
     {
-      "index": 56,
+      "index": 54,
       "fill": "#ffffff",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1202,7 +1162,7 @@
       "points": 59
     },
     {
-      "index": 57,
+      "index": 55,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1221,7 +1181,7 @@
       "points": 8
     },
     {
-      "index": 58,
+      "index": 56,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1240,7 +1200,7 @@
       "points": 8
     },
     {
-      "index": 59,
+      "index": 57,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1259,7 +1219,7 @@
       "points": 8
     },
     {
-      "index": 60,
+      "index": 58,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1278,7 +1238,7 @@
       "points": 8
     },
     {
-      "index": 61,
+      "index": 59,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1297,7 +1257,7 @@
       "points": 8
     },
     {
-      "index": 62,
+      "index": 60,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1316,7 +1276,7 @@
       "points": 8
     },
     {
-      "index": 63,
+      "index": 61,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1335,7 +1295,7 @@
       "points": 9
     },
     {
-      "index": 64,
+      "index": 62,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1354,26 +1314,26 @@
       "points": 9
     },
     {
-      "index": 65,
+      "index": 63,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
       "bbox_pt": [
         637.05,
-        176.59,
+        176.58,
         650.11,
         203.68
       ],
       "bbox_mm": [
         224.74,
-        62.3,
+        62.29,
         229.34,
         71.85
       ],
       "points": 9
     },
     {
-      "index": 66,
+      "index": 64,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -1392,7 +1352,7 @@
       "points": 9
     },
     {
-      "index": 67,
+      "index": 65,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1411,7 +1371,7 @@
       "points": 42
     },
     {
-      "index": 68,
+      "index": 66,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -1430,7 +1390,7 @@
       "points": 60
     },
     {
-      "index": 69,
+      "index": 67,
       "fill": "#ffffff",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1449,7 +1409,7 @@
       "points": 147
     },
     {
-      "index": 70,
+      "index": 68,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1468,7 +1428,7 @@
       "points": 8
     },
     {
-      "index": 71,
+      "index": 69,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1487,7 +1447,7 @@
       "points": 8
     },
     {
-      "index": 72,
+      "index": 70,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1506,7 +1466,7 @@
       "points": 8
     },
     {
-      "index": 73,
+      "index": 71,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1525,7 +1485,7 @@
       "points": 8
     },
     {
-      "index": 74,
+      "index": 72,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1544,7 +1504,7 @@
       "points": 8
     },
     {
-      "index": 75,
+      "index": 73,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1563,7 +1523,26 @@
       "points": 8
     },
     {
-      "index": 76,
+      "index": 74,
+      "fill": "#6e7a33",
+      "stroke": null,
+      "stroke_width_pt": 1.0,
+      "bbox_pt": [
+        625.99,
+        140.17,
+        689.22,
+        449.27
+      ],
+      "bbox_mm": [
+        220.84,
+        49.45,
+        243.14,
+        158.49
+      ],
+      "points": 8
+    },
+    {
+      "index": 75,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1575,14 +1554,14 @@
       ],
       "bbox_mm": [
         217.63,
-        70.65,
+        70.64,
         220.25,
         80.33
       ],
       "points": 17
     },
     {
-      "index": 77,
+      "index": 76,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1601,7 +1580,7 @@
       "points": 9
     },
     {
-      "index": 78,
+      "index": 77,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1613,14 +1592,14 @@
       ],
       "bbox_mm": [
         160.86,
-        70.65,
+        70.64,
         163.48,
         80.33
       ],
       "points": 17
     },
     {
-      "index": 79,
+      "index": 78,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1639,7 +1618,7 @@
       "points": 9
     },
     {
-      "index": 80,
+      "index": 79,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1658,7 +1637,7 @@
       "points": 9
     },
     {
-      "index": 81,
+      "index": 80,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1677,7 +1656,7 @@
       "points": 9
     },
     {
-      "index": 82,
+      "index": 81,
       "fill": null,
       "stroke": "#e4e5eb",
       "stroke_width_pt": 1.0,
@@ -1696,7 +1675,7 @@
       "points": 9
     },
     {
-      "index": 83,
+      "index": 82,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -1715,7 +1694,7 @@
       "points": 17
     },
     {
-      "index": 84,
+      "index": 83,
       "fill": null,
       "stroke": "#797e91",
       "stroke_width_pt": 1.0,
@@ -1734,7 +1713,7 @@
       "points": 17
     },
     {
-      "index": 85,
+      "index": 84,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1753,13 +1732,13 @@
       "points": 59
     },
     {
-      "index": 86,
+      "index": 85,
       "fill": "#383838",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
         611.46,
-        204.59,
+        204.58,
         636.34,
         438.97
       ],
@@ -1772,7 +1751,7 @@
       "points": 65
     },
     {
-      "index": 87,
+      "index": 86,
       "fill": null,
       "stroke": "#292f44",
       "stroke_width_pt": 1.0,
@@ -1791,7 +1770,7 @@
       "points": 148
     },
     {
-      "index": 88,
+      "index": 87,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1810,7 +1789,7 @@
       "points": 12
     },
     {
-      "index": 89,
+      "index": 88,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1829,7 +1808,7 @@
       "points": 12
     },
     {
-      "index": 90,
+      "index": 89,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1848,7 +1827,7 @@
       "points": 12
     },
     {
-      "index": 91,
+      "index": 90,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1867,7 +1846,7 @@
       "points": 12
     },
     {
-      "index": 92,
+      "index": 91,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1886,7 +1865,7 @@
       "points": 12
     },
     {
-      "index": 93,
+      "index": 92,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1905,7 +1884,7 @@
       "points": 12
     },
     {
-      "index": 94,
+      "index": 93,
       "fill": "#98a64f",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1924,7 +1903,7 @@
       "points": 12
     },
     {
-      "index": 95,
+      "index": 94,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1943,7 +1922,7 @@
       "points": 12
     },
     {
-      "index": 96,
+      "index": 95,
       "fill": "#6e7a33",
       "stroke": null,
       "stroke_width_pt": 1.0,
@@ -1962,23 +1941,42 @@
       "points": 12
     },
     {
+      "index": 96,
+      "fill": "#222221",
+      "stroke": null,
+      "stroke_width_pt": 1.0,
+      "bbox_pt": [
+        232.85,
+        247.03,
+        240.19,
+        257.88
+      ],
+      "bbox_mm": [
+        82.15,
+        87.15,
+        84.73,
+        90.97
+      ],
+      "points": 143
+    },
+    {
       "index": 97,
       "fill": "#222221",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        231.85,
-        244.72,
-        239.54,
-        256.1
+        241.03,
+        246.99,
+        249.22,
+        257.93
       ],
       "bbox_mm": [
-        81.79,
-        86.33,
-        84.51,
-        90.35
+        85.03,
+        87.13,
+        87.92,
+        90.99
       ],
-      "points": 143
+      "points": 162
     },
     {
       "index": 98,
@@ -1986,18 +1984,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        240.42,
-        244.69,
-        249.0,
-        256.15
+        250.13,
+        247.03,
+        257.47,
+        257.88
       ],
       "bbox_mm": [
-        84.82,
-        86.32,
-        87.84,
-        90.36
+        88.24,
+        87.15,
+        90.83,
+        90.98
       ],
-      "points": 162
+      "points": 143
     },
     {
       "index": 99,
@@ -2005,18 +2003,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        249.97,
-        244.73,
-        257.66,
-        256.11
+        258.31,
+        247.07,
+        265.81,
+        257.93
       ],
       "bbox_mm": [
-        88.18,
-        86.34,
-        90.9,
-        90.35
+        91.13,
+        87.16,
+        93.77,
+        90.99
       ],
-      "points": 143
+      "points": 221
     },
     {
       "index": 100,
@@ -2024,18 +2022,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        258.54,
-        244.77,
-        266.4,
-        256.16
+        176.02,
+        228.99,
+        187.76,
+        244.35
       ],
       "bbox_mm": [
-        91.21,
-        86.35,
-        93.98,
-        90.37
+        62.1,
+        80.78,
+        66.24,
+        86.2
       ],
-      "points": 221
+      "points": 197
     },
     {
       "index": 101,
@@ -2043,18 +2041,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        172.28,
-        225.81,
-        184.58,
-        241.91
+        188.22,
+        228.99,
+        202.09,
+        244.35
       ],
       "bbox_mm": [
-        60.78,
-        79.66,
-        65.12,
-        85.34
+        66.4,
+        80.78,
+        71.29,
+        86.2
       ],
-      "points": 197
+      "points": 218
     },
     {
       "index": 102,
@@ -2062,18 +2060,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        185.06,
-        225.81,
-        199.61,
-        241.91
+        203.28,
+        229.2,
+        216.06,
+        244.13
       ],
       "bbox_mm": [
-        65.28,
-        79.66,
-        70.42,
-        85.34
+        71.71,
+        80.86,
+        76.22,
+        86.13
       ],
-      "points": 218
+      "points": 126
     },
     {
       "index": 103,
@@ -2081,16 +2079,16 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        200.85,
-        226.04,
-        214.25,
-        241.69
+        217.39,
+        229.2,
+        230.17,
+        244.13
       ],
       "bbox_mm": [
-        70.86,
-        79.74,
-        75.58,
-        85.26
+        76.69,
+        80.86,
+        81.2,
+        86.13
       ],
       "points": 126
     },
@@ -2100,18 +2098,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        215.64,
-        226.04,
-        229.03,
-        241.69
+        231.49,
+        229.2,
+        236.69,
+        244.13
       ],
       "bbox_mm": [
-        76.07,
-        79.74,
-        80.8,
-        85.26
+        81.66,
+        80.86,
+        83.5,
+        86.13
       ],
-      "points": 126
+      "points": 5
     },
     {
       "index": 105,
@@ -2119,18 +2117,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        230.42,
-        226.04,
-        235.87,
-        241.69
+        237.61,
+        229.2,
+        251.1,
+        244.14
       ],
       "bbox_mm": [
-        81.29,
-        79.74,
-        83.21,
-        85.26
+        83.82,
+        80.86,
+        88.58,
+        86.13
       ],
-      "points": 5
+      "points": 120
     },
     {
       "index": 106,
@@ -2138,18 +2136,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        236.84,
-        226.04,
-        250.98,
-        241.69
+        158.59,
+        228.33,
+        162.03,
+        233.52
       ],
       "bbox_mm": [
-        83.55,
-        79.74,
-        88.54,
-        85.26
+        55.95,
+        80.55,
+        57.16,
+        82.38
       ],
-      "points": 120
+      "points": 13
     },
     {
       "index": 107,
@@ -2157,18 +2155,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        154.0,
-        225.12,
-        157.6,
-        230.56
+        162.46,
+        228.25,
+        166.3,
+        233.58
       ],
       "bbox_mm": [
-        54.33,
-        79.42,
-        55.6,
-        81.34
+        57.31,
+        80.52,
+        58.67,
+        82.4
       ],
-      "points": 13
+      "points": 247
     },
     {
       "index": 108,
@@ -2176,18 +2174,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        158.06,
-        225.04,
-        162.09,
-        230.63
+        166.66,
+        228.31,
+        170.45,
+        233.5
       ],
       "bbox_mm": [
-        55.76,
-        79.39,
-        57.18,
-        81.36
+        58.79,
+        80.54,
+        60.13,
+        82.37
       ],
-      "points": 247
+      "points": 9
     },
     {
       "index": 109,
@@ -2195,35 +2193,35 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        162.46,
-        225.1,
-        166.43,
-        230.54
+        170.6,
+        228.31,
+        175.19,
+        233.49
       ],
       "bbox_mm": [
-        57.31,
-        79.41,
-        58.71,
-        81.33
+        60.19,
+        80.54,
+        61.8,
+        82.37
       ],
-      "points": 9
+      "points": 68
     },
     {
       "index": 110,
-      "fill": "#222221",
+      "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        166.59,
-        225.1,
-        171.41,
-        230.54
+        158.69,
+        211.51,
+        172.39,
+        226.34
       ],
       "bbox_mm": [
-        58.77,
-        79.41,
-        60.47,
-        81.33
+        55.98,
+        74.62,
+        60.82,
+        79.85
       ],
       "points": 68
     },
@@ -2233,18 +2231,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        154.11,
-        207.49,
-        168.47,
-        223.04
+        173.9,
+        211.51,
+        184.26,
+        226.34
       ],
       "bbox_mm": [
-        54.37,
-        73.2,
-        59.43,
-        78.68
+        61.35,
+        74.62,
+        65.0,
+        79.85
       ],
-      "points": 68
+      "points": 7
     },
     {
       "index": 112,
@@ -2252,18 +2250,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        170.05,
-        207.49,
-        180.91,
-        223.04
+        185.42,
+        211.51,
+        190.58,
+        226.34
       ],
       "bbox_mm": [
-        59.99,
-        73.2,
-        63.82,
-        78.68
+        65.41,
+        74.62,
+        67.23,
+        79.85
       ],
-      "points": 7
+      "points": 5
     },
     {
       "index": 113,
@@ -2271,18 +2269,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        182.12,
-        207.49,
-        187.54,
-        223.04
+        191.56,
+        211.51,
+        209.37,
+        226.34
       ],
       "bbox_mm": [
-        64.25,
-        73.2,
-        66.16,
-        78.68
+        67.58,
+        74.62,
+        73.86,
+        79.85
       ],
-      "points": 5
+      "points": 205
     },
     {
       "index": 114,
@@ -2290,18 +2288,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        188.57,
-        207.49,
-        207.24,
-        223.04
+        210.36,
+        211.51,
+        222.26,
+        226.34
       ],
       "bbox_mm": [
-        66.52,
-        73.2,
-        73.11,
-        78.68
+        74.21,
+        74.62,
+        78.41,
+        79.85
       ],
-      "points": 205
+      "points": 13
     },
     {
       "index": 115,
@@ -2309,18 +2307,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        208.27,
-        207.49,
-        220.74,
-        223.04
+        222.31,
+        211.51,
+        236.38,
+        226.34
       ],
       "bbox_mm": [
-        73.47,
-        73.2,
-        77.87,
-        78.68
+        78.42,
+        74.62,
+        83.39,
+        79.85
       ],
-      "points": 13
+      "points": 93
     },
     {
       "index": 116,
@@ -2328,18 +2326,18 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        220.79,
-        207.49,
-        235.54,
-        223.04
+        237.54,
+        211.51,
+        249.19,
+        226.34
       ],
       "bbox_mm": [
-        77.89,
-        73.2,
-        83.1,
-        78.68
+        83.8,
+        74.62,
+        87.91,
+        79.85
       ],
-      "points": 93
+      "points": 9
     },
     {
       "index": 117,
@@ -2347,73 +2345,54 @@
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        236.76,
-        207.49,
-        248.98,
-        223.04
+        247.94,
+        211.49,
+        264.95,
+        244.14
       ],
       "bbox_mm": [
-        83.52,
-        73.2,
-        87.83,
-        78.68
-      ],
-      "points": 9
-    },
-    {
-      "index": 118,
-      "fill": "#c0d174",
-      "stroke": null,
-      "stroke_width_pt": 1.0,
-      "bbox_pt": [
-        247.67,
-        207.47,
-        265.5,
-        241.69
-      ],
-      "bbox_mm": [
-        87.37,
-        73.19,
-        93.66,
-        85.26
+        87.47,
+        74.61,
+        93.47,
+        86.13
       ],
       "points": 63
     },
     {
-      "index": 119,
+      "index": 118,
       "fill": "#222221",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        250.37,
-        226.04,
-        260.1,
-        241.69
+        250.52,
+        229.2,
+        259.8,
+        244.14
       ],
       "bbox_mm": [
-        88.32,
-        79.74,
-        91.76,
-        85.26
+        88.38,
+        80.86,
+        91.65,
+        86.13
       ],
       "points": 33
     },
     {
-      "index": 120,
+      "index": 119,
       "fill": "#c0d174",
       "stroke": null,
       "stroke_width_pt": 1.0,
       "bbox_pt": [
-        247.67,
-        207.47,
-        265.5,
-        241.69
+        247.94,
+        211.49,
+        264.95,
+        244.14
       ],
       "bbox_mm": [
-        87.37,
-        73.19,
-        93.66,
-        85.26
+        87.47,
+        74.61,
+        93.47,
+        86.13
       ],
       "points": 63
     }
