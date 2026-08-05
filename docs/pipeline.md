@@ -19,6 +19,9 @@ and does no generation of its own.
                                                               ▼
                                         assets/textures/print-*.png   ◄── the deliverable
                                                               │
+  sponsor logo .svg ─────► make_logo_stencil.py ───────────────┤
+   (outside the artwork)     pipeline-design/artwork/logo-*.png │
+                                                               │
   make_weave_normal.py ──► assets/textures/knit-normal.png     │
   make_calibration.py ──► assets/textures/calib-*.png          │
                                                               ▼
@@ -101,6 +104,7 @@ Full reasoning and limits: [production-delivery.md](production-delivery.md).
 python3 tools/extract_pattern.py        # after a model change
 python3 tools/pdf_to_svg.py             # after an artwork change
 python3 tools/build_print_textures.py   # the usual one
+python3 tools/make_logo_stencil.py      # after a sponsor logo changes
 python3 tools/make_weave_normal.py      # rarely
 python3 tools/make_calibration.py       # rarely
 

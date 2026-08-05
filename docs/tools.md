@@ -1,6 +1,6 @@
 # Tools
 
-Eleven Python files in `tools/`. All are dependency-free beyond `numpy` and
+Twelve Python files in `tools/`. All are dependency-free beyond `numpy` and
 `Pillow` — deliberately, because this machine has no poppler, cairo, resvg,
 scipy, OpenCV or headless browser, and the pipeline should not need them.
 
@@ -42,6 +42,31 @@ image. Two of those images are the logo stencils the build consumes.
 
 ```bash
 python3 tools/pdf_to_svg.py
+```
+
+---
+
+## `make_logo_stencil.py` — sponsor logos from vector
+
+**Need.** Sponsors are agreed after the print artwork is drawn — Compressport on
+the back neck is a 2026 requirement the PDF knows nothing about — so a logo has
+to be able to enter the pipeline without going through the artwork. The stamping
+mechanism already exists (`paste_stencil`), but it wants a raster mask where
+**white is ink**, and logos arrive as SVG.
+
+**Does.** Renders an SVG to a white-on-black stencil PNG, cropped to the ink so
+the placement millimetres describe the logo rather than the canvas padding.
+Implements the SVG subset a logo uses — `M L C S H V Z` in both cases, plus
+`<polygon>` — and fills through `vectorart.fill_contours`, so letter counters
+stay open. Fills are ignored; a stencil has no colours.
+
+No SVG renderer is installed and the rest of `tools/` is numpy + Pillow only, so
+this makes the same trade `pdf_to_svg.py` already makes for PDF. It also beats
+the supplied bitmap on merit: Compressport's PNG is the *boxed* lockup, and only
+the vector carries the mono one.
+
+```bash
+python3 tools/make_logo_stencil.py
 ```
 
 ---

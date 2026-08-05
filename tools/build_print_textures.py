@@ -137,6 +137,36 @@ SCARPA_ABOVE_CUFF_MM = 50.0
 SCARPA_W_MM = 105.0
 SCARPA_H_MM = 12.6
 
+# Compressport, on the upper back below the neck. A 2026 sponsor requirement
+# that is NOT in the print artwork -- the PDF predates it -- so unlike every
+# other element here it has no artwork-space coordinates to be fitted from. It
+# is placed directly in back-panel millimetres, the same way SCARPA is.
+#
+# The stencil is rendered from the supplied vector lockup by
+# tools/make_logo_stencil.py. Only the width is given: the height follows from
+# the stencil's own aspect ratio, so the logo can never come out stretched, and
+# re-rendering the stencil cannot silently change its proportions on the shirt.
+#
+# Both numbers are read off the supplier's mockup and should be treated as a
+# starting point rather than a specification:
+#
+#   Width came from the mockup by scaling against the ALIMENTA lockup, whose
+#   real printed width the pipeline already knows (247mm). The logo measured
+#   41px against the wordmark's 83px, giving ~122mm. Rounded to 120.
+#
+#   Vertical position did NOT come from the mockup, and deliberately. That image
+#   is a 3/4 view of a worn garment, so it is foreshortened AND draped: solving
+#   the wordmark's scale from its top position gives 12.6 mm/px while solving it
+#   from its height gives 3.2 mm/px, a 4x disagreement. Any millimetre read off
+#   it vertically is fiction. This is instead set from the pattern: the
+#   centre-back neck seam sits at y ~= 45mm (where panels.json's back row
+#   profile closes its neck gap), and the logo centre is placed a hand's width
+#   below it.
+COMPRESSPORT_STENCIL = ROOT / "pipeline-design" / "artwork" / "logo-compressport.png"
+COMPRESSPORT_ACROSS = 0.5  # centred on the back
+COMPRESSPORT_BELOW_TOP_MM = 95.0  # centre, from the panel's top edge (~50mm below the neck seam)
+COMPRESSPORT_W_MM = 120.0
+
 # Palette read straight off the vector artwork.
 STRIPE_LIGHT = "#c0d174"
 STRIPE_MID = "#98a64f"
@@ -173,7 +203,17 @@ PANELS = {
     "back": dict(
         px_per_mm=2.0,
         fit=ART_BACK_TORSO,
-        ops=[dict(kind="paths", paths=BODY_STRIPES_BACK, extend=STRIPE_EXTEND_MM)],
+        ops=[
+            dict(kind="paths", paths=BODY_STRIPES_BACK, extend=STRIPE_EXTEND_MM),
+            dict(
+                kind="stencil",
+                stencil=COMPRESSPORT_STENCIL,
+                across_frac=COMPRESSPORT_ACROSS,
+                below_top_mm=COMPRESSPORT_BELOW_TOP_MM,
+                width_mm=COMPRESSPORT_W_MM,
+                colour=INK,
+            ),
+        ],
     ),
     # Sleeves are not fitted from the technical flat: a sleeve pattern piece is
     # the tube unrolled (397mm around x 204mm long) while the flat draws the
@@ -523,12 +563,28 @@ def main():
             elif op["kind"] == "stencil":
                 box = op.get("box")
                 if box is None and "across_frac" in op:
-                    # Across the panel as a fraction, along it as millimetres up
-                    # from the bottom edge, sized in real millimetres -- so
-                    # moving it can never resize it.
+                    # Across the panel as a fraction, along it as millimetres
+                    # from one edge, sized in real millimetres -- so moving it
+                    # can never resize it.
+                    #
+                    # Measured up from the bottom for a sleeve badge (the cuff
+                    # is the landmark) and down from the top for a back-neck
+                    # logo (the neckline is). Both are real distances to a real
+                    # garment feature, which is the point: a fraction of panel
+                    # height would move if the pattern were ever regraded.
                     cx = op["across_frac"] * w_mm
-                    cy = h_mm - op["above_bottom_mm"]
-                    sw, sh = op["size_mm"]
+                    if "above_bottom_mm" in op:
+                        cy = h_mm - op["above_bottom_mm"]
+                    else:
+                        cy = op["below_top_mm"]
+                    if "size_mm" in op:
+                        sw, sh = op["size_mm"]
+                    else:
+                        # Height from the stencil's own aspect, so the logo
+                        # cannot be stretched by giving it a wrong pair.
+                        sw = op["width_mm"]
+                        with Image.open(op["stencil"]) as st:
+                            sh = sw * st.height / st.width
                     box = (cx - sw / 2, cy - sh / 2, cx + sw / 2, cy + sh / 2)
                 if box is None:
                     ax0, ay0, ax1, ay1 = op["art_box"]
