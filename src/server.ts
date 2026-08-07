@@ -1,6 +1,7 @@
 import { join, sep } from "node:path";
 import index from "./index.html";
 import indexProd from "./index-prod.html";
+import indexModelValidation from "./index-model-validation.html";
 
 // Matches Babylon's own convention (see doc.babylonjs.com/guidedLearning/usingVite,
 // which uses a "public/" folder the same way): only the runtime-fetched asset
@@ -11,11 +12,18 @@ const assetsRoot = join(import.meta.dir, "..", "assets");
 const server = Bun.serve({
   routes: {
     "/": index,
-    // The baked, self-contained build from tools/build_production_glb.py.
-    // Same scene configuration as "/", but no material code at all — see the
-    // comment at the top of index-prod.html. ?calib swaps in the
-    // millimetre-grid model, which is how the bake is verified.
+
+    // The shipping arrangement: Babylon Viewer v2, imported from npm rather
+    // than a CDN, pointed at the baked model. This is what a site embedding
+    // the shirt should copy — see docs/production-delivery.md section 6.
     "/prod": indexProd,
+
+    // The acceptance test for the bake, and the reason it hand-builds an
+    // Engine and a Scene: it reads the loaded materials back to prove the .glb
+    // carries its own appearance, which a viewer that just renders it cannot
+    // tell you. ?calib swaps in the millimetre-grid model, ?debug shows the
+    // badge on a passing build, ?inspect opens the Babylon inspector.
+    "/model-validation": indexModelValidation,
   },
 
   // Re-bundles on each request and enables the injected HMR websocket;

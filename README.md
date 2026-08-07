@@ -9,18 +9,28 @@ lighting.
 ## Run it
 
 ```bash
-bun run dev     # http://localhost:3000       the development scene
-                # http://localhost:3000/prod  the baked, shippable model
+bun install     # only src/index-prod.html needs it — see below
+bun run dev     # http://localhost:3000                   the development scene
+                # http://localhost:3000/prod              the production embed
+                # http://localhost:3000/model-validation  the acceptance test
 ```
 
-No build step. Babylon loads from its CDN; the page and its assets are served
-straight from disk.
+Three pages, and the difference between the last two is the point:
 
-`/` builds the six panel materials in JavaScript, which is the right shape for
-working on the design. `/prod` loads `assets/tshirt-prod.glb` — the same shirt
-with the UV mapping, textures and materials baked into the model — and contains
-no material code at all. See
-[production-delivery.md](docs/production-delivery.md).
+| page | what it is |
+|---|---|
+| `/` | builds the six panel materials in JavaScript. The right shape for working on the design. |
+| `/prod` | **what shipping looks like.** The Babylon Viewer v2 web component pointed at `assets/tshirt-prod.glb`. This is the page to copy when embedding the shirt somewhere. |
+| `/model-validation` | **the acceptance test for the bake.** Hand-builds an Engine and a Scene so it can read the loaded materials back and assert the model carries its own appearance — which a viewer that merely renders it cannot tell you. `?calib`, `?debug`, `?inspect`. |
+
+`/` and `/model-validation` load Babylon from its CDN and need no install step.
+`/prod` deliberately does not: it imports `@babylonjs/viewer` from npm, because
+[production-delivery.md](docs/production-delivery.md) §5 quotes Babylon's own
+docs saying the CDN "should not be used in production environments" — and a
+page that stands in for a production embed should not be the exception. Bun
+bundles it; there is still no build step to run by hand.
+
+See [production-delivery.md](docs/production-delivery.md).
 
 There is also `src/playground.js` — the same scene shaped for
 [playground.babylonjs.com](https://playground.babylonjs.com). Select all, paste,

@@ -32,6 +32,13 @@ pipeline-design/artwork/pdf-images/img26_3000x3000.png
 __pycache__/
 *.pyc
 
+# npm dependencies. The repo went without any for a long time -- the pages
+# loaded Babylon from cdn.babylonjs.com, which needs no install step. That is
+# also what docs/production-delivery.md section 5 says twice must NOT be done in
+# production, so src/index-prod.html now imports @babylonjs/viewer from here
+# instead and Bun bundles it. bun.lock IS tracked; the tree is not.
+node_modules/
+
 # Per-machine Claude Code settings: permission allowlists with absolute paths
 # and session ids in them. .claude/settings.json (shared) is not ignored.
 .claude/settings.local.json

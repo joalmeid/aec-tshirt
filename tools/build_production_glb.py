@@ -447,7 +447,7 @@ def main():
         f"  {len(gltf['materials'])} materials, {len(gltf['images'])} images, "
         f"knit tiled every {TILE_MM:.0f}mm via TEXCOORD_1\n"
         f"  extensionsUsed: {gltf['extensionsUsed']}\n"
-        f"\nverify:  bun run dev  then open /prod"
+        f"\nverify:  bun run dev  then open /model-validation"
         f"{'?calib' if args.textures == 'calib' else ''}\n"
         f"compress (optional, needs node):\n"
         f"  npx @gltf-transform/cli optimize {out_path.relative_to(ROOT)} "

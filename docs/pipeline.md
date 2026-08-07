@@ -32,7 +32,8 @@ and does no generation of its own.
                                                               │
                                                               ▼
                                         assets/tshirt-prod.glb  ◄── what ships
-                                        src/index-prod.html
+                                        src/index-prod.html            (embed)
+                                        src/index-model-validation.html (test)
 ```
 
 The last stage is separate on purpose: everything above it is how the design is
@@ -93,9 +94,12 @@ the knit map as a tiled normal, sheen enabled, and an IBL environment.
 
 `build_production_glb.py` bakes all of §5's per-panel texturing into the model —
 UVs, textures, samplers, materials, sheen, tangents — so the result renders
-without any of this repo's JavaScript. `src/index-prod.html` (served at `/prod`)
-is the test page and contains no material code at all. The environment and tone
-mapping stay outside the file, because glTF has nowhere to put them.
+without any of this repo's JavaScript. Two pages consume the result:
+`src/index-prod.html` (`/prod`) is the production embed, a Babylon Viewer v2
+element; `src/index-model-validation.html` (`/model-validation`) is the
+acceptance test that proves the bake, and contains no material code at all. The
+environment and tone mapping stay outside the file, because glTF has nowhere to
+put them.
 Full reasoning and limits: [production-delivery.md](production-delivery.md).
 
 ## Running it
@@ -110,7 +114,8 @@ python3 tools/make_calibration.py       # rarely
 
 python3 tools/build_production_glb.py   # bake the shippable model
 
-bun run dev                             # serve at :3000  ( / and /prod )
+bun run dev                             # serve at :3000
+                                        # / , /prod , /model-validation
 ```
 
 ## Verifying

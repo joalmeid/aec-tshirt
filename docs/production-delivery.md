@@ -8,8 +8,15 @@ and reloaded, and the Playground twin makes it shareable.
 It is the wrong shape for shipping. This document is what changes, why, and what
 the limits are. Unlike [reusable-pipeline.md](reusable-pipeline.md) and
 [ideal-reusable-pipeline.md](ideal-reusable-pipeline.md), which are design
-studies, **this one is implemented**: `tools/build_production_glb.py` and
-`src/index-prod.html`.
+studies, **this one is implemented**: `tools/build_production_glb.py`,
+`src/index-prod.html` and `src/index-model-validation.html`.
+
+Those two pages are not variants of each other and the split matters:
+
+| | |
+|---|---|
+| `src/index-prod.html` → `/prod` | **The embed.** Babylon Viewer v2 from npm, §6. What a site should copy — and what the association's website runs. |
+| `src/index-model-validation.html` → `/model-validation` | **The acceptance test.** Hand-builds an Engine and a Scene so it can read the loaded materials back and assert the bake, §7. |
 
 ---
 
@@ -137,7 +144,12 @@ ratified environment or IBL extension; every viewer supplies its own.
 — it is the Khronos 3D Commerce standard, so a certified viewer already applies
 it. Babylon's certified configuration differs from the engine defaults in exactly
 two ways: this tone mapper, and `transparencyAsCoverage = true` on the glTF
-loader (which turns off "specular over alpha"). `index-prod.html` sets both.
+loader (which turns off "specular over alpha").
+
+This is the clearest illustration of why §6 recommends the viewer.
+`index-model-validation.html` sets both by hand, because it builds its own
+Engine. `index-prod.html` sets neither: Viewer v2 is 3D Commerce Certified by
+default, so both come for free and there is nothing to keep in sync.
 
 **Exposure 1.15.** This event's own grade, carried over so the two pages can be
 compared. It is *not* part of the certification, so a partner site rendering at
@@ -156,15 +168,69 @@ cannot do this part either — its documented support table lists
 `KHR_texture_basisu` ❌, `EXT_meshopt_compression` ❌ and
 `KHR_materials_variants` ❌ — so a post-step is required whichever route you take.
 
+**Measure before choosing a method.** The instinct is to compress the textures,
+and on this model that is close to pointless: of 10.54 MB, the seven images are
+**0.81 MB** and the geometry is **9.72 MB** — float32 positions, normals,
+tangents and UVs, with uint32 indices for primitives that never exceed 24,268
+vertices. KTX2 would chase the smallest tenth of the file.
+
+This is the command that produced `assets/tshirt-prod-min.glb`, **10.54 MB →
+6.77 MB**, and every flag after the first is load-bearing:
+
 ```bash
 npx @gltf-transform/cli optimize assets/tshirt-prod.glb assets/tshirt-prod-min.glb \
-    --texture-compress ktx2 --compress meshopt
+    --compress quantize --texture-compress false --simplify false \
+    --palette false --join false --flatten false --instance false \
+    --prune-solid-textures false
 ```
 
-On texture mode, Babylon's KTX2 documentation is specific and it matters here:
-**ETC1S for the prints** (true-colour data), **UASTC for `knit-normal.png`** —
-ETC1S is explicitly called out as poor for anything that is not colour data, and
-a normal map is direction data.
+| attribute | before | after |
+|---|---|---|
+| INDICES | 2.86 MB `u32` | 1.43 MB `u16` |
+| TANGENT | 1.96 MB `f32` | 0.98 MB `i16` |
+| NORMAL | 1.47 MB `f32` | 0.74 MB `i16` |
+| POSITION | 1.47 MB `f32` | 0.74 MB `i16` |
+| TEXCOORD_0 | 0.98 MB `f32` | 0.59 MB, mostly `u16` |
+| TEXCOORD_1 | 0.98 MB `f32` | unchanged |
+
+`KHR_mesh_quantization` is the only extension this adds, and Babylon reads it
+natively — **no decoder wasm is fetched**, which is the reason to prefer it over
+Draco or meshopt here. Tangents are kept, at half the bytes, so §3's portability
+argument survives compression rather than being traded away.
+
+`TEXCOORD_1` is skipped by design: the knit UV is in millimetres and tiles far
+beyond [0,1], so quantizing it would require a texture transform — the exact
+convention hazard the bake exists to remove.
+
+### The passes that must stay off
+
+`optimize` runs everything by default, and four of its passes break this model's
+contract:
+
+- **`--prune-solid-textures`** turned `print-collar_a` and `print-collar_b` into
+  material factors, taking `images` from 7 to 5. Visually near-identical, and it
+  breaks the "six textured materials" assertion in §7 — caught only because that
+  assertion exists.
+- **`--palette`** merges materials; there must be exactly six.
+- **`--join` / `--flatten`** restructure meshes and nodes.
+- **`--simplify`** decimates geometry. Not obviously wrong, but it is a visual
+  change and must not ride along with a lossless one.
+
+Verify a compressed build at `/model-validation?min`, which renders it with the
+same camera, environment and tone mapping as the original *and* asserts the
+contract, then run the validator over it.
+
+### If more is needed
+
+The inner shells are the next 3.72 MB — see §8 — and they are a visual decision,
+not a free one. `EXT_meshopt_compression` roughly halves geometry again but
+fetches a decoder wasm from `cdn.babylonjs.com` by default, which is a CSP and
+GDPR problem and must be self-hosted.
+
+On texture mode, if it ever does become worthwhile, Babylon's KTX2 documentation
+is specific: **ETC1S for the prints** (true-colour data), **UASTC for
+`knit-normal.png`** — ETC1S is explicitly called out as poor for anything that
+is not colour data, and a normal map is direction data.
 
 ### Then self-host the decoders
 
@@ -178,33 +244,124 @@ The same page carries the more general warning, twice:
 
 > The CDN should not be used in production environments.
 
-That applies to the `<script>` tags in `index.html` and `index-prod.html`, and
-separately: `playground.js` fetches assets from `raw.githubusercontent.com`,
+**`index-prod.html` no longer does.** It imports `@babylonjs/viewer` from npm
+and Bun bundles it, which is why this repo now has a `node_modules` at all. The
+`<script>` tags remain in `index.html` and `index-model-validation.html`, and
+that is fine — both are development pages that only ever run on a developer's
+machine. The distinction is the whole reason the two were split.
+
+Separately: `playground.js` fetches assets from `raw.githubusercontent.com`,
 which is a Playground convenience, not a CDN — no cache headers you control, and
 rate-limited. Neither is the production origin.
 
----
+### Bundle for production, with splitting
 
-## 6. Embedding
+Worth knowing before this is built for deployment rather than served by
+`bun run dev`: bundling the embed **without** code splitting collapses the
+viewer's dynamic imports into one file — 4.5 MB, 1.11 MB gzipped — which throws
+away the main reason to use it. With splitting, the entry is ~80 KB gzipped and
+the glTF loader and each extension arrive as separate chunks.
 
-The least-code option is Babylon Viewer v2, which is **3D Commerce Certified by
-default** — the two settings above come for free:
-
-```html
-<babylon-viewer source="shirt.glb" environment="studio.env"></babylon-viewer>
+```bash
+bun build ./src/index-prod.html --outdir dist --minify --splitting
 ```
 
-It imports loaders and glTF extensions dynamically (no Draco or KTX2 code
-downloaded unless the model uses them), suspends rendering when scrolled out of
-view, and picks WebGL or WebGPU itself. `viewerconfig.babylonjs.com` generates
-the attributes.
+Bundlers that split `import()` automatically, Next.js among them, get this for
+free.
+
+---
+
+## 6. Embedding — `src/index-prod.html`
+
+Babylon Viewer v2, and this is no longer a recommendation to weigh up: it is
+what `/prod` and the association's website both run.
+
+```html
+<babylon-viewer
+  source="/assets/tshirt-prod.glb"
+  environment-lighting="/assets/env/studio.env"
+  environment-intensity="1"
+  tone-mapping="neutral"
+  camera-auto-orbit
+></babylon-viewer>
+```
+
+Note `environment-lighting`, not `environment` — the attribute name in 9.x.
+`viewerconfig.babylonjs.com` generates the rest.
+
+What the viewer supplies, all of which the validation page writes by hand:
+
+| | |
+|---|---|
+| 3D Commerce certified by default | `transparencyAsCoverage` and KHR PBR Neutral — the two settings from §4 |
+| dynamic extension imports | `KHR_materials_sheen` is fetched; Draco, KTX2 and FBX are not |
+| `autoSuspendRendering` | rendering stops when scrolled out of view or in a background tab |
+| camera framing | computed from the model |
+| WebGL / WebGPU | chosen per device |
+
+**What it cannot know**, and what therefore stays in `src/prod.js`:
+
+- **Exposure 1.15.** The viewer defaults to 1.0, and §4 explains why that is
+  correct-but-different.
+- **The key light.** The viewer lights from the environment alone. Added through
+  `viewerDetails.scene`, with `specular` black so the shine stays with the
+  material's sheen lobe. A scene changed from outside the viewer must call
+  `viewerDetails.markSceneMutated()`, since it renders on demand rather than
+  every frame.
+
+### Four things that bite
+
+Every one of these failed *silently* — no exception, no error event, and in two
+cases no network request at all. Between them they cost an afternoon on the
+website embed, so they are written down in the order they were hit.
+
+**Version skew.** The viewer declares `peerDependencies: { "@babylonjs/core":
+"^9.0.0" }`, which is far looser than reality. Viewer 9.20 against core 9.17
+installs without a warning, creates its engine, logs the *core* version to the
+console — and then never loads the model, with no error thrown and no event
+fired. Keep `@babylonjs/core`, `@babylonjs/loaders` and `@babylonjs/viewer` on
+the same version. The console banner naming a version you did not expect is the
+tell.
+
+**React sets `source` as a property, and the viewer ignores it.** React assigns
+a prop to a custom element as a *property* when the name exists on the element,
+and only falls back to an attribute otherwise. So `environment-lighting` and
+`tone-mapping` — dash-cased, not property names — arrive as attributes and work,
+while `source` is assigned as a property before the viewer instance exists, and
+that assignment is dropped. The element then sits there fully initialised,
+holding the correct URL in `.source`, having never requested anything. Set it as
+an attribute instead:
+
+```jsx
+// NOT source={url} — that becomes a property and is lost
+viewerRef.current.setAttribute("source", url);
+```
+
+The tell is `viewer.source` returning the right URL while
+`viewer.getAttribute("source")` returns `null`. In plain HTML, as on this page,
+the attribute is present from parse time and the problem does not exist.
+
+**A CSP without `blob:` in `connect-src` breaks the textures.** Babylon extracts
+the images embedded in a `.glb` into Blob URLs and fetches them back, so a
+policy of `connect-src 'self'` blocks every one. The model downloads, then fails
+per texture with `Error status: 0` — which reads like a corrupt asset rather
+than a policy decision, and the browser's CSP violations are logged separately
+from Babylon's error. `blob:` grants no new reach; a `blob:` URL can only be one
+the page itself created. `/prod` never hits this because Bun serves no CSP —
+which is exactly why an embed must be tested behind the real headers.
+
+**The mousewheel.** The viewer wires the standard zoom, which is right for a
+full-page viewer and wrong for one embedded mid-article: it captures the wheel
+on hover and stalls anyone scrolling past. The website detaches
+`camera.inputs.attached.mousewheel` until the visitor clicks the shirt. `/prod`
+keeps it, being a full-page viewer.
 
 `<model-viewer>` is the other candidate. Verify sheen renders there before
 committing — the cloth lobe is the whole reason this scene is PBR.
 
 ---
 
-## 7. Verifying a build — `src/index-prod.html`
+## 7. Verifying a build — `src/index-model-validation.html`
 
 ```bash
 bun run dev
@@ -213,16 +370,24 @@ bun run dev
 | URL | what it shows |
 |---|---|
 | `/` | the development scene: geometry `.glb` + 130 lines of material code |
-| `/prod` | `tshirt-prod.glb` and **no material code at all** |
-| `/prod?calib` | the millimetre-grid build — the acceptance test |
-| `/prod?inspect` | the same with the Babylon inspector |
-| `/prod?debug` | show the self-containment badge on a passing build |
+| `/prod` | the production embed, §6 — Viewer v2, no material code and no engine code either |
+| `/model-validation` | `tshirt-prod.glb` on a hand-built Engine and **no material code at all** |
+| `/model-validation?calib` | the millimetre-grid build — the acceptance test |
+| `/model-validation?inspect` | the same with the Babylon inspector |
+| `/model-validation?debug` | show the self-containment badge on a passing build |
 
-`index-prod.html` contains no panel table, no texture code and no material code —
-it constructs neither a material nor a texture, and the only material properties
-it touches are the ones it reads back to check the bake. Everything after the
-loader is camera, environment and tone mapping: the row-two items from §2. **If
-the shirt renders correctly at `/prod`, the model is genuinely self-contained.**
+`index-model-validation.html` contains no panel table, no texture code and no
+material code — it constructs neither a material nor a texture, and the only
+material properties it touches are the ones it reads back to check the bake.
+Everything after the loader is camera, environment and tone mapping: the row-two
+items from §2. **If the shirt renders correctly at `/model-validation`, the
+model is genuinely self-contained.**
+
+It hand-builds an Engine on purpose, and that is the one thing to preserve if
+this page is ever revisited. The viewer at `/prod` renders the shirt but cannot
+tell you *why* it looks right, and a shirt that renders "nearly right" is the
+failure worth guarding against. Reading the materials back requires owning the
+scene.
 
 It also asserts the contract, because a shirt that renders "nearly right" is the
 failure worth guarding against — a lost material, extension or UV set still
@@ -235,12 +400,19 @@ accident.
 
 Three checks, in order:
 
-1. **`/prod?calib`.** Every panel upright and unmirrored, grid at the right
-   scale. This is the one that catches a flipped or rescaled bake, and it is the
-   reason `make_calibration.py` exists — see [decisions.md](decisions.md).
-2. **`/prod` against `/`.** Same shirt. Differences are attributable, because
-   the two pages share their camera, environment and tone mapping verbatim.
-3. **The validator.** `npx @gltf-transform/cli validate assets/tshirt-prod.glb`
+1. **`/model-validation?calib`.** Every panel upright and unmirrored, grid at
+   the right scale. This is the one that catches a flipped or rescaled bake, and
+   it is the reason `make_calibration.py` exists — see
+   [decisions.md](decisions.md).
+2. **`/model-validation` against `/`.** Same shirt. Differences are
+   attributable, because the two pages share their camera, environment and tone
+   mapping verbatim.
+3. **`/prod` against `/model-validation`.** Also the same shirt, but the
+   agreement means something different: the validation page sets the tone
+   mapper, `transparencyAsCoverage` and the framing explicitly, and the viewer
+   arrives at them by default. A divergence here is the viewer's configuration
+   drifting from the certified one, not a bad bake.
+4. **The validator.** `npx @gltf-transform/cli validate assets/tshirt-prod.glb`
    should report no errors and no warnings.
 
 ### A known, deliberate non-issue
